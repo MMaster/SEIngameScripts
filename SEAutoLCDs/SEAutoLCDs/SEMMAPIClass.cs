@@ -45,7 +45,7 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.18 [b][i][Oxygen & LCD joining support!][/i][/b]
+/* v:1.181 [b][i][Oxygen & LCD joining support!][/i][/b]
 In-game script by MMaster
 
 [b]Manages multiple LCDs based on commands written in LCD public title.
@@ -895,7 +895,7 @@ public class LCDsProgram
             }
         }
 
-        percent = tank_sum / tank_cnt;
+        percent = (tank_cnt > 0 ? tank_sum / tank_cnt: 0);
 
         MMLCDTextManager.AddLine(panel, "");
         MMLCDTextManager.Add(panel, "Oxygen Tanks average");
