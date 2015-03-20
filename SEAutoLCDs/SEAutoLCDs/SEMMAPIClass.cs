@@ -45,7 +45,7 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.161 [b][i][LCD joining support!][/i][/b]
+/* v:1.18 [b][i][Oxygen & LCD joining support!][/i][/b]
 In-game script by MMaster
 
 [b]Manages multiple LCDs based on commands written in LCD public title.
@@ -55,6 +55,7 @@ In-game script by MMaster
 - Filtered inventory items listing & missing items listing
 - Reactor, solar & battery power stats
 - Damaged blocks list with progress bars!
+- Oxygen pressure & tanks content!
 - Filter blocks by name
 - Cargo space
 - Block count
@@ -575,6 +576,9 @@ public class LCDsProgram
                 cmd.command == "cargoall")
                 RunCargoStatus(panel, cmd);
             else
+            if (cmd.command == "oxygen")
+                RunOxygenStatus(panel, cmd);
+            else
             if (cmd.command == "power" ||
                 cmd.command == "powersummary")
                 RunPowerStatus(panel, cmd);
@@ -598,7 +602,6 @@ public class LCDsProgram
             else
             if (cmd.command == "pos")
                 RunPosition(panel, cmd);
-
 
             MM.Debug("Done.");
         }
@@ -730,6 +733,14 @@ public class LCDsProgram
         if (lasant != null)
             return MM.GetLaserAntennaStatus(lasant);
 
+        IMyAirVent vent = block as IMyAirVent;
+        if (vent != null)
+            return MM.GetLastDetailedValue(block);
+
+        IMyOxygenTank tank = block as IMyOxygenTank;
+        if (tank != null)
+            return MM.GetLastDetailedValue(block);
+
         return "ON";
     }
 
@@ -832,6 +843,66 @@ public class LCDsProgram
 
         if (!found)
             MMLCDTextManager.AddLine(panel, "No damaged blocks found.");
+    }
+
+    public void RunOxygenStatus(MMPanel panel, MMCommand cmd)
+    {
+        double tank_sum = 0;
+        int tank_cnt = 0;
+        string str;
+        double percent = 0;
+        string namelike = (cmd.nameLike == "*" ? "" : cmd.nameLike);
+        List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
+
+        List<IMyTerminalBlock> blcks = new List<IMyTerminalBlock>();
+        MM.GetBlocksOfType(ref blcks, "airvent");
+        blocks.AddList(blcks);
+        blcks.Clear();
+
+        MM.GetBlocksOfType(ref blcks, "oxytank");
+        blocks.AddList(blcks);
+
+        for (int i = 0; i < blocks.Count; i++)
+        {
+            IMyTerminalBlock block = blocks[i];
+            if (namelike != "" && !block.CustomName.Contains(namelike))
+                continue;
+
+            switch (block.DefinitionDisplayNameText)
+            {
+                case "Air Vent":
+                    str = MM.GetLastDetailedValue(block);
+                    str = str.Substring(0, str.Length - 1);
+
+                    if (!Double.TryParse(str, out percent))
+                        percent = 0;
+                    
+                    MMLCDTextManager.Add(panel, block.CustomName);
+                    MMLCDTextManager.AddRightAlign(panel, str, LCD_LINE_WORK_STATE_POS);
+                    MMLCDTextManager.AddLine(panel, "");
+                    MMLCDTextManager.AddProgressBar(panel, percent, FULL_PROGRESS_CHARS);
+                    MMLCDTextManager.AddLine(panel, "");
+                    continue;
+                case "Oxygen Tank":
+                    str = MM.GetLastDetailedValue(block);
+                    str = str.Substring(0, str.Length - 1);
+
+                    double tank_oxy = 0;
+                    if (Double.TryParse(str, out tank_oxy))
+                        tank_sum += tank_oxy;
+                    tank_cnt++;
+                    continue;
+            }
+        }
+
+        percent = tank_sum / tank_cnt;
+
+        MMLCDTextManager.AddLine(panel, "");
+        MMLCDTextManager.Add(panel, "Oxygen Tanks average");
+        MMLCDTextManager.AddRightAlign(panel, percent.ToString() + "%", LCD_LINE_WORK_STATE_POS);
+        MMLCDTextManager.AddLine(panel, "");
+        MMLCDTextManager.AddProgressBar(panel, percent, FULL_PROGRESS_CHARS);
+        MMLCDTextManager.AddLine(panel, "");
     }
 
     public void RunCargoStatus(MMPanel panel, MMCommand cmd)
@@ -1432,7 +1503,9 @@ public class MMBlockCollection
     {
         if (nameLike == "")
         {
-            MM.GetBlocksOfType(ref Blocks, type);
+            List<IMyTerminalBlock> blocksOfType = new List<IMyTerminalBlock>();
+            MM.GetBlocksOfType(ref blocksOfType, type);
+            Blocks.AddList(blocksOfType);
         }
         else
         {
@@ -1602,24 +1675,21 @@ public class MMItemAmounts
         MMAmountSpec spec;
         bool found = false;
 
-        mainType = mainType.ToLower();
-        spec = specByMainLower.GetItem(mainType);
+        spec = specByMainLower.GetItem(mainType.ToLower());
         if (spec != null)
         {
             if (spec.ignore)
                 return true;
             found = true;
         }
-        subType = subType.ToLower();
-        spec = specBySubLower.GetItem(subType);
+        spec = specBySubLower.GetItem(subType.ToLower());
         if (spec != null)
         {
             if (spec.ignore)
                 return true;
             found = true;
         }
-        fullType = fullType.ToLower();
-        spec = specByFullLower.GetItem(fullType);
+        spec = specByFullLower.GetItem(fullType.ToLower());
         if (spec != null)
         {
             if (spec.ignore)
@@ -1668,9 +1738,7 @@ public class MMItemAmounts
                     spec.subType, spec.mainType))
                 continue;
             if (spec.mainType == mainType)
-            {
                 result.Add(spec);
-            }
         }
 
         return result;
@@ -1876,7 +1944,14 @@ public static class MM
     public static string GetLaserAntennaStatus(IMyLaserAntenna gear)
     {
         string[] info_lines = gear.DetailedInfo.Split('\n');
-        string state = info_lines[info_lines.Length - 1].Split(' ')[0].ToUpper();
+        return info_lines[info_lines.Length - 1].Split(' ')[0].ToUpper();
+    }
+
+    public static string GetLastDetailedValue(IMyTerminalBlock block)
+    {
+        string[] info_lines = block.DetailedInfo.Split('\n');
+        string[] state_parts = info_lines[info_lines.Length - 1].Split(':');
+        string state = (state_parts.Length > 1?state_parts[1]:state_parts[0]);
         return state;
     }
 
@@ -2022,6 +2097,15 @@ public static class MM
         if (typeInStr.StartsWith("bea"))
             _GridTerminalSystem.GetBlocksOfType<IMyBeacon>(blocks);
         else
+        if (typeInStr.Contains("vent"))
+            _GridTerminalSystem.GetBlocksOfType<IMyAirVent>(blocks);
+        else
+        if (typeInStr.Contains("tank") && typeInStr.Contains("oxy"))
+            _GridTerminalSystem.GetBlocksOfType<IMyOxygenTank>(blocks);
+        else
+        if (typeInStr.Contains("gene") && typeInStr.Contains("oxy"))
+            _GridTerminalSystem.GetBlocksOfType<IMyOxygenGenerator>(blocks);
+        else
         if (typeInStr == "laserantenna")
             _GridTerminalSystem.GetBlocksOfType<IMyLaserAntenna>(blocks);
         else
@@ -2106,7 +2190,7 @@ public static class MM
         if ((typeInStr.Contains("launcher") && typeInStr.Contains("reload")))
             _GridTerminalSystem.GetBlocksOfType<IMySmallMissileLauncherReload>(blocks);
         else
-        if ((typeInStr.Contains("laucher")))
+        if ((typeInStr.Contains("launcher")))
             _GridTerminalSystem.GetBlocksOfType<IMySmallMissileLauncher>(blocks);
         else
         if (typeInStr.Contains("mass"))
