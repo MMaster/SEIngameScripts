@@ -1,0 +1,479 @@
+MMaster's Automatic LCDs Full Guide (for v1.16)
+
+[b]Complete guide for Configurable Automatic LCDs script for Space Engineers.[/b]
+
+It will answer all your questions how to get LCDs to display dynamic info about your ship or station. You will find detailed information about how the commands are used with examples so you can fully use all the features as they were designed and implemented.
+
+Read the guide and give your ships some awesome status displays that everyone will envy!
+
+
+========================================================================================================================
+Overview
+
+[b]Welcome to the Full Guide for my Configurable Automatic LCDs script for Space Engineers![/b]
+
+Workshop link: http://steamcommunity.com/sharedfiles/filedetails/?id=403921671
+
+Unfortunately there is not enough space in description of the steam workshop page to fit full guide. Well.. there was, but thanks to your suggestions I added more commands and more cool stuff and it doesn't fit there anymore. So I made this ultimate guide to answer all your questions! ;-)
+
+This guide will give you full insight into how to use all the features of Automatic LCDs. You will find out what are the commands, what are the arguments of the commands and how to use them. It also contains full list of all commands with detailed description along with examples of use.
+
+If you didn't watch the basic video guide yet, please do so now to better understand what this guide is about.
+
+[previewyoutube=oopzyQ0t6Dk;full][/previewyoutube]
+
+========================================================================================================================
+Basic Terms
+
+[h1]What is command line?[/h1]
+Command line is line of text representing some command with it's arguments.
+[i]Command Argument Argument[/i]
+
+[h1]What is command?[/h1]
+Command is first word of the command line telling the script what function do you want it to perform.
+[i]Command[/i]
+
+[h1]What are arguments?[/h1]
+Arguments are rest of the words of the command line after the command word.
+[i]Argument Argument[/i]
+
+[h1]What is block?[/h1]
+Block is every machine, button, cockpit, everything on your ship that is accessible through control panel. Armors are not blocks. Script only works with blocks.
+Every block has its name that you can set in control panel and main type.
+
+[h1]What is block main type?[/h1]
+Block main type is the generic type of the block like assembler, refinery, reactor, solar, door, landinggear, container, .., etc.
+For example container corresponds to all small, medium and large containers.
+
+[h1]What is item?[/h1]
+Item is everything that can be stored in container. Item has its type and sub-type.
+
+[h1]What is item type and sub-type?[/h1]
+Type is main type of item like Ore, Ingot, Component, Ammo and Tool.
+Sub-type is the name of the item like Stone, Iron, Steelplate, Construction, .., etc.
+
+
+========================================================================================================================
+One-time setup
+
+When you want to start using Automatic LCDs you need to first subscribe to it. Which you probably already did, but just in case here is the link:
+
+http://steamcommunity.com/workshop/filedetails/?id=403921671
+
+[b] 1.[/b] Load this script into programmable block. 
+[i](look at video guide how to do that)[/i]
+[b] 2.[/b] Build timer block and set its delay to 1 second.
+[b] 3.[/b] Setup timer block actions to:
+[list][*]1. Run programmable block
+[*]2. Start this timer[/list]
+[b] 4.[/b] Start timer block
+[i] [OPTIONAL] You can build button to trigger the timer block on demand, but if you use more LCDs you will need to press it more times as this script updates 1 LCD per single run.[/i]
+[b] 5.[/b] Build a few LCD panels. You can use even Wide LCD or Text panel.
+
+[b] 6.[/b] Add [b][LCD][/b] to the end of the name of your panels. [b](including [ ] )[/b]
+[b][i]German client users:[/i][/b] your [LCD] will probably not work. Use !LCD! instead.
+
+[b] 7.[/b] Use any font size you like on your LCDs. [b]0.8 is recommended.[/b]
+
+The initial setup is now complete. You don't need to touch the programmable block anymore. Just make sure the timer is running the program every second.
+[b]I highly recommend touching the programmable block now and then to update the script[/b] if there were any new features added or bugs fixed. Check the steam workshop page regularly or follow my twitter for notifications. 
+[b]This guide will always be updated.[/b]
+
+Next you need to set some commands to those LCDs.
+Commands are entered into [b]LCD Public Title[/b] that you can find in control panel of each LCD.
+
+
+========================================================================================================================
+Joining LCDs together
+
+It is now possible to join multiple LCDs together so they will look and work like single panel. Because of the limitations of text alignment it is only possible to join LCDs up and down. Not left to right. So the widest LCD you can have is Wide LCD. But you can have many of them under each other to form single big one.
+
+You can do that by adding [b]!LINK:GROUP NUMBER[/b]. Where:
+GROUP is your custom name for this group of LCDs. It has nothing to do with ingame groups of blocks. Just make up some name.
+NUMBER is position of LCD in array of LCDs. It doesn't matter what number you choose. They just need to go one after another. So the topmost LCD will have the lowest number. For example 1. LCD under it will have 2, etc.
+
+[i][b]The command line will be taken from first LCD in group.
+
+All joined LCDs will be automatically set to the same font as the first LCD in group.[/b][/i]
+
+[h1]Example[/h1]
+You have 3 LCDs under each other. 
+Call the top LCD "Text panel [LCD] !LINK:A 1" 
+Call the middle one "Text Panel [LCD] !LINK:A 2"
+and last one "Text Panel [LCD] !LINK:A 3"
+
+You can have another group of LCDs joined and you just need to change the group from A to for example B.
+
+
+========================================================================================================================
+Commands Guide
+
+All commands usually work without entering any arguments.
+
+More commands are separated using [b];[/b]
+[i]Time Base Stats - Time: ;echo;Power;echo;Cargo[/i]
+
+That line will display text "Base Stats - Time:" following with current time
+Next it will show empty line.
+Show power stats
+Empty line
+Show cargo stats
+
+You can specify filters and other things by using command arguments. Arguments of each command are explained separately for each command.
+
+Each argument is always just one word - which means everything not separated by space.
+[i]+ore,ingot[/i] - this is single word
+[i]+ore/stone +ingot[/i] - two words
+
+First argument usually specifies filter for name of blocks
+[b]* means all blocks[/b]
+[i]Inventory *[/i]
+This will show all items from all blocks.
+
+[i]Inventory Storage[/i]
+This will show all items from blocks which have Storage in name.
+
+[i]Inventory [CARGO][/i]
+This will show all items from blocks which have [CARGO] (including [ ]) in name.
+
+You can enter multiple words in single argument by using [b]{[/b] and [b]}[/b]
+[i]Inventory {My Cargo Container}[/i]
+This will show inventory of blocks which have "My Cargo Container" (without quotes) in [b]name[/b].
+
+========================================================================================================================
+Command: Inventory
+
+Displays inventory summary for certain item types. It automatically adds 0 items lines for vanilla game items. Script will automatically display even modded items if they are in the inventories, but it will not report missing modded items.
+If you don't want to display missing items (0 items lines) use [b]InventoryX[/b] instead of Inventory (good for displaying contents of container).
+
+This command has some default quotas set for vanilla items. It's quota is considered [b]maximum quota[/b] which means that this is the maximum number of items you ever expect to have. So you can easily see just by looking at the progress bar around how many items you have.
+
+[i]Advanced: If you know something about how items in SE internals work, you can translate or add modded items to be reported when 0 of them is in the inventory. Look into Modded Items discussion on the Steam Workshop page for more info.[/i]
+
+[h1]Arguments[/h1]
+No arguments: displays all items on current ship/station.     
+First argument: filters blocks based on name - look into Command Guide section for more info.
+Next arguments: specify included/excluded item types and can override default quotas.
+
+[h1]Item type and quota specification:[/h1]
+Operator [b]+[/b] or [b]-[/b] adds or removes items from display.
+[i]+all[/i] adds all item types to display
+[i]-ore[/i] removes ores from display
+[i][b]You need to add something for - operator to work![/b][/i]
+
+[b]Use main types in specification:[/b]
+ore (all ores)
+ingot (all ingots)
+component (all components)
+ammo (all ammo boxes)
+tool (all tools + hand guns)
+
+[b]Or sub types:[/b]
+iron, gold, nickel, platinum, cobalt, magnesium, silicon, silver, uranium [i](both ores and ingots)[/i]
+scrap (ingot)
+construction, metalgrid, interiorplate, steelplate, girder, smalltube, largetube, motor, display, bpglass, computer, reactor, thruster, gravgen, medical, radio, detector, explosives, solarcell, powercell [i](components)[/i]
+automaticrifleitem, welderitem, anglegrinderitem, handdrillitem [i](tools)[/i]
+nato_5p56x45mm, nato_25x184mm, missile200mm [i](ammo)[/i]
+
+[i]You can use modded items names usually found out by removing spaces from what the display shows in all items summary.
+So for example: Super_Mega Large Bullet would be super_megalargebullet[/i]
+
+[b]Or both:[/b]
+ingot/iron (only iron ingots), ingot/uranium (only processed uranium)
+[b]You can combine that like this:[/b]
++ingot/iron,gold (add iron and gold ingots)
++ingot,component (add ingots and components)
++steelplate,construction (steelplates and construction components)
+
+[b]To override progress bar quotas:[/b]
+[i]+ingot:10000[/i]
+Adds all ingots with all of them having max progress bar value 10000.
+
+[i]+component:1000 +steelplate:10000,construction:9000[/i]
+Adds all components with quota 1000
+Next it overrides steelplate and construction components with different quotas.
+
+[h1]Examples[/h1]
+Inventory * +all -ore
+Inventory Cargo +ingot -scrap
+Inventory {Red Storage} +ingot:300000
+Inventory [STORAGE] +component
+Inventory {Cargo Container} +all -tool -ammo
+Inventory {Large Cargo Container 3} +ingot:1000 +component:50
+
+========================================================================================================================
+Command: InvList
+
+This command is exactly the same as Inventory, but it doesn't display items categories.
+You can use InvListX to remove 0 items lines just like in Inventory command.
+
+========================================================================================================================
+Command: Missing
+
+Displays items which are low in stock (lower than set quota).
+This works almost the same as Inventory command, but it shows only items which are lower than set quota.
+This quota is different from the Inventory command quota, because it is [b]minimum quota[/b]. You can use this command to only show items which are very low in stock so just by looking at it you will see what needs your immediate attention. That is why default quota is set to 1 so only when you have 0 items they will show up there - which I think almost always needs your immediate attention.
+
+Usage of the command is exactly the same as Inventory command and you can override the quotas in the same way.
+
+[h1]Examples[/h1]
+[i]Missing * +component:50 +ingot:100 +ammo:10
+Missing {Resource Storage} +ore:2000[/i]
+
+========================================================================================================================
+Command: Cargo
+
+Displays cargo space of specified cargo containers. Only from cargo containers.
+
+[h1]Arguments[/h1]
+No arguments: all containers on ship/station
+First argument: filters containers based on name
+
+[h1]Examples[/h1]
+[i]Cargo
+Cargo Storage
+Cargo {Large Cargo Container 5}[/i]
+
+========================================================================================================================
+Command: CargoAll
+
+Displays cargo space of specified blocks. All blocks including cargo containers, refineries input, assemblers input, reactors, welders, .. etc.
+
+Usage is exactly the same as Cargo.
+
+========================================================================================================================
+Command: Power
+
+Displays power statistics for specified blocks
+Automatically separates reactors, solar panels and batteries
+
+[h1]Arguments[/h1]
+No arguments: all reactors, solars and batteries
+First argument: filters blocks based on [b]name[/b]
+
+[h1]Examples[/h1]
+[i]Power
+Power {Small Reactor}
+Power {Large Reactor}
+Power {Battery 2}
+Power {Main Power}[/i]
+
+========================================================================================================================
+Command: PowerSummary
+
+Displays total power output for specified blocks.
+
+[h1]Arguments[/h1]
+No arguments: all reactors, solars and batteries
+First argument: filters blocks based on name
+
+[h1]Examples[/h1]
+[i]PowerSummary
+PowerSummary {Small Reactor}[/i]
+
+========================================================================================================================
+Command: Damage
+
+Displays damaged and partially built ship/station blocks. No armor blocks are considered.
+
+[h1]Arguments[/h1]
+No arguments: all blocks on ship/station
+First argument: filters blocks based on [b]name[/b]
+
+[h1]Examples[/h1]
+[i]Damage
+Damage {Large Thruster}
+Damage [IMPORTANT][/i]
+
+========================================================================================================================
+Command: BlockCount
+
+Displays number of blocks of specified type
+Separates different sub types of blocks
+
+[h1]Arguments[/h1]
+No arguments: nothing will be displayed!
+First argument: filters blocks based on name, still nothing displayed!
+Next arguments: filter blocks based on type
+
+[b]Use main block type name like:[/b]
+reactor, thruster, container, refinery, assembler, solar, battery, beacon, antenna, gyro, sensor, connector, spotlight, interlight, landgear, program, timer, rotor, piston, projector, merge, sound, collector, door, spheregrav, gravgen, drill, grinder, welder, gatlingturret, missileturret, interiorturret, gatlinggun, reloadlauncher, launcher, mass, warhead, light, control, cockpit, medi, remote, button, camera, detector, laserantenna
+
+[b]Types separated by space or ,[/b]
+
+[h1]Example:[/h1]
+BlockCount * reactor
+BlockCount [BACKUP] reactor
+BlockCount * refinery,assembler
+BlockCount * thruster gyro reactor,solar,battery
+
+========================================================================================================================
+Command: EnabledCount
+
+Displays number of enabled blocks of specified type.
+Separates different sub types of blocks.
+
+[h1]Arguments[/h1]
+No arguments: nothing will be displayed!
+First argument: filters blocks based on name, still nothing displayed!
+Next arguments: filter blocks based on type (look at BlockCount command for list of types).
+
+[h1]Examples[/h1]
+[i]EnabledCount * reactor
+EnabledCount * assembler[/i]
+
+========================================================================================================================
+Command: ProdCount
+
+Displays number of producing blocks of specified type.
+
+[h1]Arguments[/h1]
+No arguments: nothing will be displayed!
+First argument: filters blocks based on name, still nothing displayed!
+Next arguments: filter blocks based on type (look at BlockCount command for list of types).
+
+[h1]Example[/h1]
+[i]ProdCount * refinery,assembler[/i]
+
+========================================================================================================================
+Command: Working
+
+Displays all blocks of specified type showing their working state.
+State is one of ON/OFF, IDLE/WORK, LOCK/UNLOCK/READY, OPEN/CLOSED and laser antenna states.
+
+[h1]Arguments[/h1]
+No arguments: nothing will be displayed!
+First argument: filters blocks based on name, still nothing displayed!
+Next arguments: filter blocks based on type (look at BlockCount command for list of types).
+
+[b]You can filter states like this:[/b]
+Working * assembler:work reactor:on
+
+[h1]Examples[/h1]
+[i]Working * missileturret,gatlingturret,interturret
+Working * refinery:off refinery:idle refinery:work
+Working * door:open
+Working Red refinery,assembler[/i]
+
+========================================================================================================================
+Command: Echo
+
+Displays single line of text
+
+[h1]Arguments[/h1]
+No arguments: empty line
+Next arguments: text to be displayed
+
+[h1]Examples[/h1]
+[i]Echo
+Echo MMaster's Automatic LCD[/i]
+
+========================================================================================================================
+Command: Time
+
+Displays single line of text followed by current time
+
+[h1]Arguments[/h1]
+No arguments: display only current time
+Next arguments: text to be shown before the time
+
+[h1]Examples[/h1]
+Time
+Time MMaster's Text Panel Time: 
+
+========================================================================================================================
+Command: Pos
+
+Displays world position of the LCD panel.
+
+Does not take any argument.
+
+========================================================================================================================
+Troubleshooting
+
+[b]Read this if you have trouble.[/b]
+
+[h1]If you see some of the LCDs offline all the time maybe this will help you:[/h1]
+[i]pswartzell wrote:[/i]
+I have also found that changing the graphics settings to one step below Extreme and turning off Render Interpolation fixed this for me. My LCDs always said "offline" until I did this. They have been working flawlessly since.
+[i]Neker wrote:[/i]
+after a day of testing i figured out that they work only if i set in the advanced settings the destructable blocks to off...
+
+[h1]If some of your LCDs are sometimes offline:[/h1]
+it's probably a game bug and it's happening to more people. Someone said that loading game, returning to main menu and loading again helps.
+
+[h1]If you can't see more than one screen at time and if you turn off a screen, the other one starts working[/h1]
+It's a game bug. Restart game/server. Try answers for offline bug above.
+
+[i][b]This script cannot cause your LCD to go offline.[/b][/i]
+
+[h1]Does your LCD just say ONLINE instead of showing things?[/h1]
+Make sure that you named your LCD so it contains [LCD] . If you did, you are most probably using german client which has problems with [ ] characters that you type in game. You can use copy-paste to overcome it or simply use alternate built-in tag I made for you !LCD!
+
+[h1]No command works.[/h1]
+Check that the timer block is running.
+Check if Programmable block didn't crash by looking at it's control panel bottom right corner.
+It would say some exception, most probably 'Script is too complex'. 
+Check other troubleshooting sections.
+If there is no exception and everything is running as it should:
+I really recommend that you watch the Video guide even if you don't understand spoken English. Also make sure you read this guide carefully. Read the command guide to make sure you enter the commands right. Try some example from this guide.
+
+[h1]Check your ownership[/h1]
+Always make sure that the programmable block, timer and LCDs have the same ownership as the blocks you want to show on the LCDs. I highly recommend you own all the blocks unless you know how ownership works. Just open the control panel, select one of the blocks on your ship, press CTRL+A and change the ownership on the right side to 'Me'.
+
+[h1]The command doesn't work?[/h1]
+[b]1.[/b] Please check this guide for command description and try some examples if those work. 
+[b]2.[/b] Make sure you carefully read the command description in this guide and that you understand what it is saying. If you don't understand what it is saying please let me know and I will modify it to be more clear.
+[b]3.[/b] Compare what the command description says with what you are entering.
+[b]4.[/b] Check [b]Troubleshooting section[/b] in the guide if it doesn't have your problem covered
+[b]5.[/b] If you are 100% sure and you checked everything at least 10 times and it doesn't work please report it and I will try to help you.
+
+[h1]Programmable block reports 'Script too complex'.[/h1]
+That means that your ship is too complex. There is a way to try to run the script again, but it will crash again unless you stop using the command that is causing it. So I recommend removing the commands from LCDs first and then:
+Click [b]Edit[/b] in programmable block and then press [b]Check code[/b] on the script again to make the script run again. (continue reading this!).
+
+My recommendations:
+- Try to filter the blocks based on name to select smaller group of blocks that the script can handle. 
+- Do not use multiple commands on single LCD.
+- You can try to use some other commands like Cargo, BlockCount or Power which may work. 
+- You can try to stop using LCD linking.
+
+If nothing helps then I'm really sorry, but there is hard game limitation of how much stuff script can do in single run and if your ship is too big there is nothing more I can do. I did what I could to make this script really effective (that's why most people don't have this problem). If you have this problem then you are too awesome! I'm sorry, but no status screens on your ship :(
+
+[h1]Programmable block reports 'Index out of bounds'.[/h1]
+Make sure that you updated the script to latest version with all the fixes.
+If you did then I probably messed up: please report as soon as possible to bug section with all the things the bug section wants you to report. If you fill it right I promise it will be fixed very soon.
+
+[h1]Russian or other client that uses non-latin characters doesn't align text correctly.[/h1]
+Yes, I'm sorry but it is hard for me to cover those characters in this script. Please use English if possible.
+
+[h1]I need to see what assembler/refinery is producing like on your screenshot[/h1]
+It is not possible to find out what assembler or refinery is doing from the script. What you see on screenshot are names of assemblers and refineries. I use scripts Crafting Component Quotas and Selective Refining. Crafting Components Quotas can rename your assemblers like you see on screenshot.
+
+========================================================================================================================
+Tips & Tricks
+
+[h1]Add title line to your LCD regardless of commands[/h1]
+Name your LCD block like this: Text panel [LCD] #Heading
+it will add the text after # as first line
+Add spaces between # and text to move it right.
+
+[h1]How to split the work to multiple programmable blocks?[/h1]
+You can use multiple Programmable blocks to split the work. But you will have to modify the script. Find LCD_TAG and change it from "[LCD]" to something else for each Programmable block. Each Programmable block will only handle LCDs marked with set LCD_TAG.
+
+[h1]If you use more panels[/h1]
+Script updates one panel per run.
+You can modify PANELS_PER_STEP to update more panels in single run, but it adds to complexity of the script so the maximum value for this depends on complexity of your ship and your commands.
+Please DO NOT report problems with modified PANELS_PER_STEP.
+
+========================================================================================================================
+Special Thanks
+
+I would really like to thank:
+bssespaceengineers.com - awesome server I found a while ago (you need to join BSSE group)
+Rhedd - for his contribution to modded items entries in Modded Items discussion.
+Textor and CyberVic for their great script related contributions on Keen forums.
+
+Watch Twitter: https://twitter.com/MattsPlayCorner
+and Facebook: https://www.facebook.com/MattsPlayCorner1080p
+if you want to see some more crazy stuff from me in the future :)
