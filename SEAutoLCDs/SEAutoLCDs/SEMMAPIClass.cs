@@ -45,7 +45,7 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.181 [b][i][Oxygen & LCD joining support!][/i][/b]
+/* v:1.20 [b][i][Oxygen, LCD joining & Groups support!][/i][/b]
 In-game script by MMaster
 
 [b]Manages multiple LCDs based on commands written in LCD public title.
@@ -56,7 +56,7 @@ In-game script by MMaster
 - Reactor, solar & battery power stats
 - Damaged blocks list with progress bars!
 - Oxygen pressure & tanks content!
-- Filter blocks by name
+- Filter blocks by name or group
 - Cargo space
 - Block count
 - Producing, Idle & Enabled summary / list
@@ -104,6 +104,7 @@ Note: Look at [b]COMMANDS section below for more detailed explanation[/b]
 http://steamcommunity.com/sharedfiles/filedetails/?id=407158161
 
  * LCD linking is explained only in full guide!
+ * Block group usage is only in full guide!
  * Please read the full guide. Not everything fits to this description :(
 
 
@@ -606,7 +607,7 @@ public class LCDsProgram
             MM.Debug("Done.");
         }
 
-        if (!MM.EnableDebug)
+        //if (!MM.EnableDebug)
             MMLCDTextManager.UpdatePanel(panel);
         //MM.Debug("Updated panel text.");
     }
@@ -622,9 +623,6 @@ public class LCDsProgram
     {
         bool enabledCnt = (cmd.command == "enabledcount");
         bool producingCnt = (cmd.command == "prodcount");
-        MMBlockCollection blocks = new MMBlockCollection();
-        if (cmd.arguments.Count == 0)
-            blocks.Blocks = MM._GridTerminalSystem.Blocks;
 
         for (int i = 0; i < cmd.arguments.Count; i++)
         {
@@ -632,19 +630,12 @@ public class LCDsProgram
 
             for (int subi = 0; subi < arg.sub.Count; subi++)
             {
-                blocks.Clear();
-                MM.GetBlocksOfType(ref blocks.Blocks, arg.sub[subi]);
-
-                MMBlockCollection f_blocks = blocks;
-                if (cmd.nameLike != "" && cmd.nameLike != "*")
-                {
-                    f_blocks = new MMBlockCollection();
-                    blocks.GetBlocksWithNameLike(f_blocks, cmd.nameLike);
-                }
+                MMBlockCollection blocks = new MMBlockCollection();
+                blocks.AddBlocksOfType(arg.sub[subi], cmd.nameLike);
 
                 string name = "";
 
-                if (f_blocks.Count() == 0)
+                if (blocks.Count() == 0)
                 {
                     name = arg.sub[subi];
                     name = char.ToUpper(name[0]) + name.Substring(1).ToLower();
@@ -659,14 +650,14 @@ public class LCDsProgram
                     Dictionary<string, int> typeWorkingCount = new Dictionary<string, int>();
                     List<string> blockTypes = new List<string>();
 
-                    for (int j = 0; j < f_blocks.Count(); j++)
+                    for (int j = 0; j < blocks.Count(); j++)
                     {
-                        IMyProductionBlock prod = f_blocks.Blocks[j] as IMyProductionBlock;
-                        name = MM.GetBlockTypeDisplayName(f_blocks.Blocks[j]);
+                        IMyProductionBlock prod = blocks.Blocks[j] as IMyProductionBlock;
+                        name = MM.GetBlockTypeDisplayName(blocks.Blocks[j]);
                         if (blockTypes.Contains(name))
                         {
                             typeCount[name]++;
-                            if ((enabledCnt && f_blocks.Blocks[j].IsWorking) ||
+                            if ((enabledCnt && blocks.Blocks[j].IsWorking) ||
                                 (producingCnt && prod != null && prod.IsProducing))
                                 typeWorkingCount[name]++;
                         }
@@ -675,7 +666,7 @@ public class LCDsProgram
                             typeCount.Add(name, 1);
                             blockTypes.Add(name);
                             if (enabledCnt || producingCnt) 
-                                if ((enabledCnt && f_blocks.Blocks[j].IsWorking) ||
+                                if ((enabledCnt && blocks.Blocks[j].IsWorking) ||
                                     (producingCnt && prod != null && prod.IsProducing))
                                     typeWorkingCount.Add(name, 1);
                                 else
@@ -746,40 +737,27 @@ public class LCDsProgram
 
     public void RunWorkingList(MMPanel panel, MMCommand cmd)
     {
-        MMBlockCollection blocks = new MMBlockCollection();
-
-        if (cmd.arguments.Count == 0)
-            blocks.Blocks = MM._GridTerminalSystem.Blocks;
-
         for (int i = 0; i < cmd.arguments.Count; i++)
         {
             MMArgument arg = cmd.arguments[i];
 
             for (int subi = 0; subi < arg.sub.Count; subi++)
             {
+                MMBlockCollection blocks = new MMBlockCollection();
                 if (arg.sub[subi] == "")
                     continue;
                 string[] subparts = arg.sub[subi].Split(':');
                 string subargtype = subparts[0];
                 string subargstate = (subparts.Length > 1 ? subparts[1].ToLower() : "");
+                blocks.AddBlocksOfType(subargtype, cmd.nameLike);
 
-                blocks.Clear();
-                MM.GetBlocksOfType(ref blocks.Blocks, subargtype);
-
-                MMBlockCollection f_blocks = blocks;
-                if (cmd.nameLike != "" && cmd.nameLike != "*")
-                {
-                    f_blocks = new MMBlockCollection();
-                    blocks.GetBlocksWithNameLike(f_blocks, cmd.nameLike);
-                }
-
-                if (f_blocks.Count() > 0) {
+                if (blocks.Count() > 0) {
                     Dictionary<string, int> typeCount = new Dictionary<string, int>();
                     List<string> blockTypes = new List<string>();
 
-                    for (int j = 0; j < f_blocks.Count(); j++)
+                    for (int j = 0; j < blocks.Count(); j++)
                     {
-                        IMyTerminalBlock block = f_blocks.Blocks[j];
+                        IMyTerminalBlock block = blocks.Blocks[j];
                         if (block == null)
                             continue;
 
@@ -851,22 +829,14 @@ public class LCDsProgram
         int tank_cnt = 0;
         string str;
         double percent = 0;
-        string namelike = (cmd.nameLike == "*" ? "" : cmd.nameLike);
-        List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
 
-        List<IMyTerminalBlock> blcks = new List<IMyTerminalBlock>();
-        MM.GetBlocksOfType(ref blcks, "airvent");
-        blocks.AddList(blcks);
-        blcks.Clear();
+        MMBlockCollection blocks = new MMBlockCollection();
+        blocks.AddBlocksOfType("airvent", cmd.nameLike);
+        blocks.AddBlocksOfType("oxytank", cmd.nameLike);
 
-        MM.GetBlocksOfType(ref blcks, "oxytank");
-        blocks.AddList(blcks);
-
-        for (int i = 0; i < blocks.Count; i++)
+        for (int i = 0; i < blocks.Count(); i++)
         {
-            IMyTerminalBlock block = blocks[i];
-            if (namelike != "" && !block.CustomName.Contains(namelike))
-                continue;
+            IMyTerminalBlock block = blocks.Blocks[i];
 
             switch (block.DefinitionDisplayNameText)
             {
@@ -909,23 +879,12 @@ public class LCDsProgram
     {
         MMBlockCollection blocks = new MMBlockCollection();
         bool alltypes = (cmd.command == "cargoall");
-        bool allnames = (cmd.nameLike == "" || cmd.nameLike == "*");
 
         if (alltypes)
-        {
-            if (allnames)
-                blocks.Blocks = MM._GridTerminalSystem.Blocks;
-            else
-                blocks.AddBlocksOfNameLike(cmd.nameLike);
-        }
+            blocks.AddBlocksOfNameLike(cmd.nameLike);
         else
-        {
-            if (allnames)
-                blocks.AddBlocksOfType("cargocontainer");
-            else
-                blocks.AddBlocksOfType("cargocontainer",
-                    cmd.nameLike);
-        }
+            blocks.AddBlocksOfType("cargocontainer",
+                cmd.nameLike);
 
         double usedCargo = 0;
         double totalCargo = 0;
@@ -1016,9 +975,6 @@ public class LCDsProgram
         MMBlockCollection batteries = new MMBlockCollection();
         int got = 0;
         bool issummary = (cmd.command == "powersummary");
-
-        if (cmd.nameLike == "*")
-            cmd.nameLike = "";
 
         reactors.AddBlocksOfType("reactor", cmd.nameLike);
         solars.AddBlocksOfType("solarpanel", cmd.nameLike);
@@ -1175,11 +1131,7 @@ public class LCDsProgram
         bool missing = (cmd.command == "missing");
         bool simple = (cmd.command == "invlist");
 
-
-        if (cmd.nameLike == "" || cmd.nameLike == "*")
-            blocks.Blocks = MM._GridTerminalSystem.Blocks;
-        else
-            blocks.AddBlocksOfNameLike(cmd.nameLike);
+        blocks.AddBlocksOfNameLike(cmd.nameLike);
 
         MMItemAmounts amounts = new MMItemAmounts();
         MMList<MMArgument> args = cmd.arguments;
@@ -1495,13 +1447,31 @@ public class MMBlockCollection
     // add Blocks with name containing nameLike  
     public void AddBlocksOfNameLike(string nameLike)
     {
+        if (nameLike == "" || nameLike == "*")
+        {
+            Blocks.AddList(MM._GridTerminalSystem.Blocks);
+            return;
+        }
+
+        string group = (nameLike.StartsWith("G:") ? nameLike.Substring(2).Trim().ToLower() : "");
+        if (group != "")
+        {
+            for (int i = 0; i < MM._GridTerminalSystem.BlockGroups.Count; i++)
+            {
+                IMyBlockGroup g = MM._GridTerminalSystem.BlockGroups[i];
+                if (g.Name.ToLower() == group)
+                    Blocks.AddList(g.Blocks);
+            }
+            return;
+        }
+
         MM._GridTerminalSystem.SearchBlocksOfName(nameLike, Blocks);
     }
 
     // add Blocks of type (optional: with name containing nameLike)  
     public void AddBlocksOfType(string type, string nameLike = "")
     {
-        if (nameLike == "")
+        if (nameLike == "" || nameLike == "*")
         {
             List<IMyTerminalBlock> blocksOfType = new List<IMyTerminalBlock>();
             MM.GetBlocksOfType(ref blocksOfType, type);
@@ -1509,16 +1479,28 @@ public class MMBlockCollection
         }
         else
         {
+            string group = (nameLike.StartsWith("G:") ? nameLike.Substring(2).Trim().ToLower() : "");
+            if (group != "")
+            {
+                for (int i = 0; i < MM._GridTerminalSystem.BlockGroups.Count; i++)
+                {
+                    IMyBlockGroup g = MM._GridTerminalSystem.BlockGroups[i];
+                    if (g.Name.ToLower() == group)
+                    {
+                        for (int j = 0; j < g.Blocks.Count; j++)
+                            if (MM.IsBlockOfType(g.Blocks[j], type))
+                                Blocks.Add(g.Blocks[j]);
+                        return;
+                    }
+                }
+                return;
+            }
             List<IMyTerminalBlock> blocksOfType = new List<IMyTerminalBlock>();
             MM.GetBlocksOfType(ref blocksOfType, type);
 
             for (int i = 0; i < blocksOfType.Count; i++)
-            {
-                IMyTerminalBlock block = blocksOfType[i];
-
-                if (block.CustomName.Contains(nameLike))
-                    Blocks.Add(block);
-            }
+                if (blocksOfType[i].CustomName.Contains(nameLike))
+                    Blocks.Add(blocksOfType[i]);
         }
     }
 
@@ -1526,16 +1508,6 @@ public class MMBlockCollection
     public void AddFromCollection(MMBlockCollection col)
     {
         Blocks.AddList(col.Blocks);
-    }
-
-    // Add Blocks from this collection with name containing nameLike to dest collection  
-    public void GetBlocksWithNameLike(MMBlockCollection dest, string nameLike)
-    {
-        for (int i = 0; i < Blocks.Count; i++)
-        {
-            if (Blocks[i].CustomName.Contains(nameLike))
-                dest.Blocks.Add(Blocks[i]);
-        }
     }
 
     // clear all reactors from this collection  
@@ -1871,16 +1843,15 @@ public static class MM
     public static bool EnableDebug = false;
     public static IMyGridTerminalSystem _GridTerminalSystem = null;
     public static MMBlockCollection _DebugTextPanels = null;
+    public static Dictionary<string, Action<List<IMyTerminalBlock>>> BlocksOfStrType = null;
 
     public static void Init(IMyGridTerminalSystem gridSystem, bool _EnableDebug)
     {
         _GridTerminalSystem = gridSystem;
         EnableDebug = _EnableDebug;
-
         _DebugTextPanels = new MMBlockCollection();
-
         MMStringFunc.InitCharSizes();
-
+        
         // prepare debug panels
         // select all text panels with [DEBUG] in name 
         if (_EnableDebug)
@@ -1891,6 +1862,7 @@ public static class MM
 
         MMItems.Init();
     }
+
 
     public static double GetPercent(double current, double max)
     {
@@ -2064,168 +2036,235 @@ public static class MM
         return block.DefinitionDisplayNameText;
     }
 
-    private static void GetBlocksOfType<T>(List<IMyTerminalBlock> blocks)
+    public static void GetBlocksOfType<T>(List<IMyTerminalBlock> blocks)
     {
         _GridTerminalSystem.GetBlocksOfType<T>(blocks);
     }
 
-    public static void GetBlocksOfType(ref List<IMyTerminalBlock> blocks, string typeInStr = "")
+    public static void GetBlocksOfExactType(ref List<IMyTerminalBlock> blocks, string exact)
+    {
+        if (exact == "CargoContainer") _GridTerminalSystem.GetBlocksOfType<IMyCargoContainer>(blocks);
+        else
+        if (exact == "TextPanel") _GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(blocks);
+        else
+        if (exact == "Assembler") _GridTerminalSystem.GetBlocksOfType<IMyAssembler>(blocks);
+        else
+        if (exact == "Refinery") _GridTerminalSystem.GetBlocksOfType<IMyRefinery>(blocks);
+        else
+        if (exact == "Reactor") _GridTerminalSystem.GetBlocksOfType<IMyReactor>(blocks);
+        else
+        if (exact == "SolarPanel") _GridTerminalSystem.GetBlocksOfType<IMySolarPanel>(blocks);
+        else
+        if (exact == "BatteryBlock") _GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(blocks);
+        else
+        if (exact == "Beacon") _GridTerminalSystem.GetBlocksOfType<IMyBeacon>(blocks);
+        else
+        if (exact == "RadioAntenna") _GridTerminalSystem.GetBlocksOfType<IMyRadioAntenna>(blocks);
+        else
+        if (exact == "AirVent") _GridTerminalSystem.GetBlocksOfType<IMyAirVent>(blocks);
+        else
+        if (exact == "OxygenTank") _GridTerminalSystem.GetBlocksOfType<IMyOxygenTank>(blocks);
+        else
+        if (exact == "OxygenGenerator") _GridTerminalSystem.GetBlocksOfType<IMyOxygenGenerator>(blocks);
+        else
+        if (exact == "LaserAntenna") _GridTerminalSystem.GetBlocksOfType<IMyLaserAntenna>(blocks);
+        else
+        if (exact == "Thrust") _GridTerminalSystem.GetBlocksOfType<IMyThrust>(blocks);
+        else
+        if (exact == "Gyro") _GridTerminalSystem.GetBlocksOfType<IMyGyro>(blocks);
+        else
+        if (exact == "SensorBlock") _GridTerminalSystem.GetBlocksOfType<IMySensorBlock>(blocks);
+        else
+        if (exact == "ShipConnector") _GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(blocks);
+        else
+        if (exact == "ReflectorLight") _GridTerminalSystem.GetBlocksOfType<IMyReflectorLight>(blocks);
+        else
+        if (exact == "InteriorLight") _GridTerminalSystem.GetBlocksOfType<IMyInteriorLight>(blocks);
+        else
+        if (exact == "LandingGear") _GridTerminalSystem.GetBlocksOfType<IMyLandingGear>(blocks);
+        else
+        if (exact == "ProgrammableBlock") _GridTerminalSystem.GetBlocksOfType<IMyProgrammableBlock>(blocks);
+        else
+        if (exact == "TimerBlock") _GridTerminalSystem.GetBlocksOfType<IMyTimerBlock>(blocks);
+        else
+        if (exact == "MotorStator") _GridTerminalSystem.GetBlocksOfType<IMyMotorStator>(blocks);
+        else
+        if (exact == "PistonBase") _GridTerminalSystem.GetBlocksOfType<IMyPistonBase>(blocks);
+        else
+        if (exact == "Projector") _GridTerminalSystem.GetBlocksOfType<IMyProjector>(blocks);
+        else
+        if (exact == "ShipMergeBlock") _GridTerminalSystem.GetBlocksOfType<IMyShipMergeBlock>(blocks);
+        else
+        if (exact == "SoundBlock") _GridTerminalSystem.GetBlocksOfType<IMySoundBlock>(blocks);
+        else
+        if (exact == "Collector") _GridTerminalSystem.GetBlocksOfType<IMyCollector>(blocks);
+        else
+        if (exact == "Door") _GridTerminalSystem.GetBlocksOfType<IMyDoor>(blocks);
+        else
+        if (exact == "GravityGeneratorSphere") _GridTerminalSystem.GetBlocksOfType<IMyGravityGeneratorSphere>(blocks);
+        else
+        if (exact == "GravityGenerator") _GridTerminalSystem.GetBlocksOfType<IMyGravityGenerator>(blocks);
+        else
+        if (exact == "ShipDrill") _GridTerminalSystem.GetBlocksOfType<IMyShipDrill>(blocks);
+        else
+        if (exact == "ShipGrinder") _GridTerminalSystem.GetBlocksOfType<IMyShipGrinder>(blocks);
+        else
+        if (exact == "ShipWelder") _GridTerminalSystem.GetBlocksOfType<IMyShipWelder>(blocks);
+        else
+        if (exact == "LargeGatlingTurret") _GridTerminalSystem.GetBlocksOfType<IMyLargeGatlingTurret>(blocks);
+        else
+        if (exact == "LargeInteriorTurret") _GridTerminalSystem.GetBlocksOfType<IMyLargeInteriorTurret>(blocks);
+        else
+        if (exact == "LargeMissileTurret") _GridTerminalSystem.GetBlocksOfType<IMyLargeMissileTurret>(blocks);
+        else
+        if (exact == "SmallGatlingGun") _GridTerminalSystem.GetBlocksOfType<IMySmallGatlingGun>(blocks);
+        else
+        if (exact == "SmallMissileLauncherReload") _GridTerminalSystem.GetBlocksOfType<IMySmallMissileLauncherReload>(blocks);
+        else
+        if (exact == "SmallMissileLauncher") _GridTerminalSystem.GetBlocksOfType<IMySmallMissileLauncher>(blocks);
+        else
+        if (exact == "VirtualMass") _GridTerminalSystem.GetBlocksOfType<IMyVirtualMass>(blocks);
+        else
+        if (exact == "Warhead") _GridTerminalSystem.GetBlocksOfType<IMyWarhead>(blocks);
+        else
+        if (exact == "FunctionalBlock") _GridTerminalSystem.GetBlocksOfType<IMyFunctionalBlock>(blocks);
+        else
+        if (exact == "LightingBlock") _GridTerminalSystem.GetBlocksOfType<IMyLightingBlock>(blocks);
+        else
+        if (exact == "ControlPanel") _GridTerminalSystem.GetBlocksOfType<IMyControlPanel>(blocks);
+        else
+        if (exact == "Cockpit") _GridTerminalSystem.GetBlocksOfType<IMyCockpit>(blocks);
+        else
+        if (exact == "MedicalRoom") _GridTerminalSystem.GetBlocksOfType<IMyMedicalRoom>(blocks);
+        else
+        if (exact == "RemoteControl") _GridTerminalSystem.GetBlocksOfType<IMyRemoteControl>(blocks);
+        else
+        if (exact == "ButtonPanel") _GridTerminalSystem.GetBlocksOfType<IMyButtonPanel>(blocks);
+        else
+        if (exact == "CameraBlock") _GridTerminalSystem.GetBlocksOfType<IMyCameraBlock>(blocks);
+        else
+        if (exact == "OreDetector") _GridTerminalSystem.GetBlocksOfType<IMyOreDetector>(blocks);
+    }
+
+    public static void GetBlocksOfType(ref List<IMyTerminalBlock> blocks, string typestr)
+    {
+        typestr = typestr.Trim().ToLower();
+
+        GetBlocksOfExactType(ref blocks, TranslateToExactBlockType(typestr));
+    }
+
+    public static bool IsBlockOfType(IMyTerminalBlock block, string typestr)
+    {
+        return block.BlockDefinition.ToString().Contains(TranslateToExactBlockType(typestr));
+    }
+
+    public static string TranslateToExactBlockType(string typeInStr)
     {
         typeInStr = typeInStr.ToLower();
 
         if (typeInStr.StartsWith("carg") || typeInStr.StartsWith("conta"))
-            _GridTerminalSystem.GetBlocksOfType<IMyCargoContainer>(blocks);
-        else
+            return "CargoContainer";
         if (typeInStr.StartsWith("text") || typeInStr.StartsWith("lcd"))
-            _GridTerminalSystem.GetBlocksOfType<IMyTextPanel>(blocks);
-        else
+            return "TextPanel";
         if (typeInStr.StartsWith("ass"))
-            _GridTerminalSystem.GetBlocksOfType<IMyAssembler>(blocks);
-        else
+            return "Assembler";
         if (typeInStr.StartsWith("refi"))
-            _GridTerminalSystem.GetBlocksOfType<IMyRefinery>(blocks);
-        else
+            return "Refinery";
         if (typeInStr.StartsWith("reac"))
-            _GridTerminalSystem.GetBlocksOfType<IMyReactor>(blocks);
-        else
+            return "Reactor";
         if (typeInStr.StartsWith("solar"))
-            _GridTerminalSystem.GetBlocksOfType<IMySolarPanel>(blocks);
-        else
+            return "SolarPanel";
         if (typeInStr.StartsWith("bat"))
-            _GridTerminalSystem.GetBlocksOfType<IMyBatteryBlock>(blocks);
-        else
+            return "BatteryBlock";
         if (typeInStr.StartsWith("bea"))
-            _GridTerminalSystem.GetBlocksOfType<IMyBeacon>(blocks);
-        else
+            return "Beacon";
         if (typeInStr.Contains("vent"))
-            _GridTerminalSystem.GetBlocksOfType<IMyAirVent>(blocks);
-        else
+            return "AirVent";
         if (typeInStr.Contains("tank") && typeInStr.Contains("oxy"))
-            _GridTerminalSystem.GetBlocksOfType<IMyOxygenTank>(blocks);
-        else
+            return "OxygenTank";
         if (typeInStr.Contains("gene") && typeInStr.Contains("oxy"))
-            _GridTerminalSystem.GetBlocksOfType<IMyOxygenGenerator>(blocks);
-        else
+            return "OxygenGenerator";
         if (typeInStr == "laserantenna")
-            _GridTerminalSystem.GetBlocksOfType<IMyLaserAntenna>(blocks);
-        else
+            return "LaserAntenna";
         if (typeInStr.Contains("antenna"))
-            _GridTerminalSystem.GetBlocksOfType<IMyRadioAntenna>(blocks);
-        else
+            return "RadioAntenna";
         if (typeInStr.StartsWith("thrust"))
-            _GridTerminalSystem.GetBlocksOfType<IMyThrust>(blocks);
-        else
+            return "Thrust";
         if (typeInStr.StartsWith("gyro"))
-            _GridTerminalSystem.GetBlocksOfType<IMyGyro>(blocks);
-        else
+            return "Gyro";
         if (typeInStr.StartsWith("sensor"))
-            _GridTerminalSystem.GetBlocksOfType<IMySensorBlock>(blocks);
-        else
+            return "SensorBlock";
         if (typeInStr.Contains("connector"))
-            _GridTerminalSystem.GetBlocksOfType<IMyShipConnector>(blocks);
-        else
+            return "ShipConnector";
         if (typeInStr.StartsWith("reflector"))
-            _GridTerminalSystem.GetBlocksOfType<IMyReflectorLight>(blocks);
-        else
+            return "ReflectorLight";
         if ((typeInStr.StartsWith("inter") && typeInStr.EndsWith("light")))
-            _GridTerminalSystem.GetBlocksOfType<IMyInteriorLight>(blocks);
-        else
+            return "InteriorLight";
         if (typeInStr.StartsWith("land"))
-            _GridTerminalSystem.GetBlocksOfType<IMyLandingGear>(blocks);
-        else
+            return "LandingGear";
         if (typeInStr.StartsWith("program"))
-            _GridTerminalSystem.GetBlocksOfType<IMyProgrammableBlock>(blocks);
-        else
+            return "ProgrammableBlock";
         if (typeInStr.StartsWith("timer"))
-            _GridTerminalSystem.GetBlocksOfType<IMyTimerBlock>(blocks);
-        else
+            return "TimerBlock";
         if (typeInStr.StartsWith("motor"))
-            _GridTerminalSystem.GetBlocksOfType<IMyMotorStator>(blocks);
-        else
+            return "MotorStator";
         if (typeInStr.StartsWith("piston"))
-            _GridTerminalSystem.GetBlocksOfType<IMyPistonBase>(blocks);
-        else
+            return "PistonBase";
         if (typeInStr.StartsWith("proj"))
-            _GridTerminalSystem.GetBlocksOfType<IMyProjector>(blocks);
-        else
+            return "Projector";
         if (typeInStr.Contains("merge"))
-            _GridTerminalSystem.GetBlocksOfType<IMyShipMergeBlock>(blocks);
-        else
+            return "ShipMergeBlock";
         if (typeInStr.StartsWith("sound"))
-            _GridTerminalSystem.GetBlocksOfType<IMySoundBlock>(blocks);
-        else
+            return "SoundBlock";
         if (typeInStr.StartsWith("col"))
-            _GridTerminalSystem.GetBlocksOfType<IMyCollector>(blocks);
-        else
+            return "Collector";
         if (typeInStr == "door")
-            _GridTerminalSystem.GetBlocksOfType<IMyDoor>(blocks);
-        else
+            return "Door";
         if ((typeInStr.Contains("grav") && typeInStr.Contains("sphe")))
-            _GridTerminalSystem.GetBlocksOfType<IMyGravityGeneratorSphere>(blocks);
-        else
+            return "GravityGeneratorSphere";
         if (typeInStr.Contains("grav"))
-            _GridTerminalSystem.GetBlocksOfType<IMyGravityGenerator>(blocks);
-        else
+            return "GravityGenerator";
         if (typeInStr.EndsWith("drill"))
-            _GridTerminalSystem.GetBlocksOfType<IMyShipDrill>(blocks);
-        else
+            return "ShipDrill";
         if (typeInStr.Contains("grind"))
-            _GridTerminalSystem.GetBlocksOfType<IMyShipGrinder>(blocks);
-        else
+            return "ShipGrinder";
         if (typeInStr.EndsWith("welder"))
-            _GridTerminalSystem.GetBlocksOfType<IMyShipWelder>(blocks);
-        else
+            return "ShipWelder";
         if ((typeInStr.Contains("turret") && typeInStr.Contains("gatl")))
-            _GridTerminalSystem.GetBlocksOfType<IMyLargeGatlingTurret>(blocks);
-        else
+            return "LargeGatlingTurret";
         if ((typeInStr.Contains("turret") && typeInStr.Contains("inter")))
-            _GridTerminalSystem.GetBlocksOfType<IMyLargeInteriorTurret>(blocks);
-        else
+            return "LargeInteriorTurret";
         if ((typeInStr.Contains("turret") && typeInStr.Contains("miss")))
-            _GridTerminalSystem.GetBlocksOfType<IMyLargeMissileTurret>(blocks);
-        else
+            return "LargeMissileTurret";
         if (typeInStr.Contains("gatl"))
-            _GridTerminalSystem.GetBlocksOfType<IMySmallGatlingGun>(blocks);
-        else
+            return "SmallGatlingGun";
         if ((typeInStr.Contains("launcher") && typeInStr.Contains("reload")))
-            _GridTerminalSystem.GetBlocksOfType<IMySmallMissileLauncherReload>(blocks);
-        else
+            return "SmallMissileLauncherReload";
         if ((typeInStr.Contains("launcher")))
-            _GridTerminalSystem.GetBlocksOfType<IMySmallMissileLauncher>(blocks);
-        else
+            return "SmallMissileLauncher";
         if (typeInStr.Contains("mass"))
-            _GridTerminalSystem.GetBlocksOfType<IMyVirtualMass>(blocks);
-        else
+            return "VirtualMass";
         if (typeInStr == "warhead")
-            _GridTerminalSystem.GetBlocksOfType<IMyWarhead>(blocks);
-        else
+            return "Warhead";
         if (typeInStr.StartsWith("func"))
-            _GridTerminalSystem.GetBlocksOfType<IMyFunctionalBlock>(blocks);
-        else
+            return "FunctionalBlock";
         if (typeInStr.StartsWith("light"))
-            _GridTerminalSystem.GetBlocksOfType<IMyLightingBlock>(blocks);
-        else
+            return "LightingBlock";
         if (typeInStr.StartsWith("contr"))
-            _GridTerminalSystem.GetBlocksOfType<IMyControlPanel>(blocks);
-        else
+            return "ControlPanel";
         if (typeInStr.StartsWith("coc"))
-            _GridTerminalSystem.GetBlocksOfType<IMyCockpit>(blocks);
-        else
+            return "Cockpit";
         if (typeInStr.StartsWith("medi"))
-            _GridTerminalSystem.GetBlocksOfType<IMyMedicalRoom>(blocks);
-        else
+            return "MedicalRoom";
         if (typeInStr.StartsWith("remote"))
-            _GridTerminalSystem.GetBlocksOfType<IMyRemoteControl>(blocks);
-        else
+            return "RemoteControl";
         if (typeInStr.StartsWith("but"))
-            _GridTerminalSystem.GetBlocksOfType<IMyButtonPanel>(blocks);
-        else
+            return "ButtonPanel";
         if (typeInStr.StartsWith("cam"))
-            _GridTerminalSystem.GetBlocksOfType<IMyCameraBlock>(blocks);
-        else
+            return "CameraBlock";
         if (typeInStr.Contains("detect"))
-            _GridTerminalSystem.GetBlocksOfType<IMyOreDetector>(blocks);
-
+            return "OreDetector";
+        return "Unknown";
     }
 
     public static string FormatLargeNumber(double number, bool compress = true)
@@ -2693,10 +2732,17 @@ public class MMDict<TKey, TValue>
 
     public TValue GetItem(TKey key)
     {
+        MM.Debug("GetItem");
         if (dict.ContainsKey(key))
+        {
+            MM.Debug("Contains it");
             return dict[key];
+        }
         else
+        {
+            MM.Debug("Nono");
             return default(TValue);
+        }
     }
 
     public TValue GetItemAt(int index)
