@@ -45,7 +45,7 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.20 [b][i][Oxygen, LCD joining & Groups support!][/i][/b]
+/* v:1.202 [b][i][Oxygen, LCD joining & Groups support!][/i][/b]
 In-game script by MMaster
 
 [b]Manages multiple LCDs based on commands written in LCD public title.
@@ -500,7 +500,7 @@ public class LCDsProgram
         for (int i = 0; i < textPanels.Count(); i++)
         {
             IMyTextPanel panel = (textPanels.Blocks[i] as IMyTextPanel);
-            string text = panel.CustomName;
+            string text = panel.CustomName + panel.NumberInGrid.ToString();
             MMPanel p = null;
 
             int joinpos = text.IndexOf("!LINK:");
@@ -508,10 +508,6 @@ public class LCDsProgram
             if (joinpos < 0 || text.Length == joinpos + 6)
             {
                 p = new MMPanel();
-                if (panels.GetItem(text) != null)
-                {
-                    text += panel.NumberInGrid.ToString();
-                }
                 p.panels.AddItem(text, panel);
                 panels.AddItem(text, p);
                 continue;
@@ -2572,8 +2568,8 @@ public static class MMLCDTextManager
 
         public void ScrollNextLine()
         {
-            int lines_cnt = lines.Count;
-            if (lines_cnt < DisplayLines)
+            int lines_cnt = lines.Count-1;
+            if (lines_cnt <= DisplayLines)
             {
                 scrollPosition = 0;
                 scrollDirection = 1;
@@ -2585,7 +2581,7 @@ public static class MMLCDTextManager
                 if (scrollPosition + LCDsProgram.SCROLL_LINES + DisplayLines > lines_cnt)
                 {
                     scrollDirection = -1;
-                    scrollPosition = lines_cnt - DisplayLines;
+                    scrollPosition = Math.Max(lines_cnt - DisplayLines, 0);
                     return;
                 }
 
@@ -2732,15 +2728,12 @@ public class MMDict<TKey, TValue>
 
     public TValue GetItem(TKey key)
     {
-        MM.Debug("GetItem");
         if (dict.ContainsKey(key))
         {
-            MM.Debug("Contains it");
             return dict[key];
         }
         else
         {
-            MM.Debug("Nono");
             return default(TValue);
         }
     }
