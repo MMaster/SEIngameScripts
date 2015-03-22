@@ -45,7 +45,7 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.202 [b][i][Oxygen, LCD joining & Groups support!][/i][/b]
+/* v:1.211 [b][i][Oxygen, LCD joining & Groups support!][/i][/b]
 In-game script by MMaster
 
 [b]Manages multiple LCDs based on commands written in LCD public title.
@@ -825,6 +825,7 @@ public class LCDsProgram
         int tank_cnt = 0;
         string str;
         double percent = 0;
+        bool found = false;
 
         MMBlockCollection blocks = new MMBlockCollection();
         blocks.AddBlocksOfType("airvent", cmd.nameLike);
@@ -838,9 +839,9 @@ public class LCDsProgram
             {
                 case "Air Vent":
                     str = MM.GetLastDetailedValue(block);
-                    str = str.Substring(0, str.Length - 1);
+                    string val = str.Substring(0, str.Length - 1);
 
-                    if (!Double.TryParse(str, out percent))
+                    if (!Double.TryParse(val, out percent))
                         percent = 0;
                     
                     MMLCDTextManager.Add(panel, block.CustomName);
@@ -848,6 +849,7 @@ public class LCDsProgram
                     MMLCDTextManager.AddLine(panel, "");
                     MMLCDTextManager.AddProgressBar(panel, percent, FULL_PROGRESS_CHARS);
                     MMLCDTextManager.AddLine(panel, "");
+                    found = true;
                     continue;
                 case "Oxygen Tank":
                     str = MM.GetLastDetailedValue(block);
@@ -861,9 +863,17 @@ public class LCDsProgram
             }
         }
 
+        if (tank_cnt == 0)
+        {
+            if (!found)
+                MMLCDTextManager.AddLine(panel, "No oxygen blocks found.");
+            return;
+        }
+
         percent = (tank_cnt > 0 ? tank_sum / tank_cnt: 0);
 
-        MMLCDTextManager.AddLine(panel, "");
+        if (found)
+            MMLCDTextManager.AddLine(panel, "");
         MMLCDTextManager.Add(panel, "Oxygen Tanks average");
         MMLCDTextManager.AddRightAlign(panel, percent.ToString() + "%", LCD_LINE_WORK_STATE_POS);
         MMLCDTextManager.AddLine(panel, "");
