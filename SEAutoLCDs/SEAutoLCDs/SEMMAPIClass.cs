@@ -45,38 +45,47 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.211 [b][i][Oxygen, LCD joining & Groups support!][/i][/b]
+/* v:1.3 [Oxygen, Ammo reports, LCD joining & Groups support!]
 In-game script by MMaster
 
-[b]Manages multiple LCDs based on commands written in LCD public title.
-- Linked LCDs!
-- Automatic LCD scrolling up and down!
-- Any font size!
-- Filtered inventory items listing & missing items listing
-- Reactor, solar & battery power stats
-- Damaged blocks list with progress bars!
-- Oxygen pressure & tanks content!
-- Filter blocks by name or group
-- Cargo space
-- Block count
-- Producing, Idle & Enabled summary / list
-- Laser antenna status
-- Doors, gears & connectors status
-- Location & Time
-- Custom lines
-- Nicely formatted text with progress bars!
-- Multiple commands in single LCD!
-- Works on any server!
+Customize these: (do not report problems with modified values!) */
 
-NO PROGRAMMING NEEDED.[/b]
 
-[i][b]Read Change Notes (above screenshots) for latest updates and new features.[/b][/i]
+// Use this tag to identify LCDs managed by this script
+public static string LCD_TAG = "[LCD]";
+
+// How many panels to update per one step
+public static int PANELS_PER_STEP = 1;
+// How many lines to scroll per step
+public static int SCROLL_LINES_PER_STEP = 5;
+
+// Force redraw of panels? (EXPERIMENTAL, default = true)
+// false - Massively reduces lag caused by LCD redraw, but can be buggy
+public static bool FORCE_REDRAW = true;
+
+// (for developer) Enable debug to antenna or LCD marked with [DEBUG]
+public static bool EnableDebug = false;
+
+        
+/*
+READ THIS FULL GUIDE
+http://steamcommunity.com/sharedfiles/filedetails/?id=407158161
+
+Basic video guide
+Please watch the video guide even if you don't understand my English. You can see how things are done there.
+
+http://www.youtube.com/watch?v=oopzyQ0t6Dk
+
+EXAMPLE WORLD
+http://steamcommunity.com/sharedfiles/filedetails/?id=412154340
+
+Read Change Notes (above screenshots) for latest updates and new features.
 I notify about updates on twitter so follow if interested. 
 
-[b]Please carefully read the [i]Full guide[/i] before asking questions![/b]
-[b]Please DO NOT publish this script or its derivations without my permission! Feel free to use it in blueprints![/b]
+Please carefully read the FULL GUIDE before asking questions!
+Please DO NOT publish this script or its derivations without my permission! Feel free to use it in blueprints!
 
-[h1]QUICK GUIDE[/h1]
+QUICK GUIDE
 1. Load this script to programmable block
 2. Build timer block, set it to 1 second
 3. Setup timer block actions: 1. Run program block 2. Start timer
@@ -86,20 +95,20 @@ I notify about updates on twitter so follow if interested.
 (e.g Text panel [LCD])
 7. Set Font Size to 0.8
 8. Set LCDs public title to one of:
-[i]Inventory * +ingot[/i]
+Inventory * +ingot
 - shows all ingots on ship/station
-[i]Inventory * +component[/i]
+Inventory * +component
 - shows all components on ship/station
-[i]Missing * +component[/i]
+Missing * +component
 - shows missing components on ship/station
-[i]Power;echo;BlockCount * reactor;echo;Cargo[/i]
+Power;echo;BlockCount * reactor;echo;Cargo
 - shows power stats and empty line, 
 reactor count, empty line and cargo stats
-Note: Look at [b]COMMANDS section below for more detailed explanation[/b]
+Note: Look at COMMANDS section below for more detailed explanation
 9. LCD panels now show whatever you told them to
 
 
-[h1]Ultimate guide to answer all your questions:[/h1]
+Ultimate guide to answer all your questions:
 
 http://steamcommunity.com/sharedfiles/filedetails/?id=407158161
 
@@ -108,12 +117,12 @@ http://steamcommunity.com/sharedfiles/filedetails/?id=407158161
  * Please read the full guide. Not everything fits to this description :(
 
 
-[h1][LIMITED] COMMANDS GUIDE[/h1]
-[i][b]This guide explains only basic usage. Please read the full guide.[/b][/i]
+[LIMITED] COMMANDS GUIDE
+This guide explains only basic usage. Please read the full guide.
 
 All commands usually work without entering any arguments.
-More commands are separated using [b];[/b]
-e.g: [i]Time Base Stats - Time: ;echo;Power;echo;Cargo;[/i]
+More commands are separated using ;
+e.g: Time Base Stats - Time: ;echo;Power;echo;Cargo;
 (display text following with current time;next line;
 show power stats;next line;show cargo stats)
 You can specify filters and other things by using command arguments.
@@ -121,18 +130,18 @@ Each argument is just one word
 
 First argument usually specifies filter for name of blocks
 * means all blocks
-e.g: [i]Inventory * +ingot[/i]
+e.g: Inventory * +ingot
 (this will show all ingots from all blocks)
-or: [i]Inventory Storage +component[/i]
+or: Inventory Storage +component
 (this will show components from blocks which have Storage in name)
 
 Enter multiple words in single argument by using { and }
-e.g.: [i]Inventory {My Cargo Container}[/i]
+e.g.: Inventory {My Cargo Container}
 (this will show inventory of blocks which have
 "My Cargo Container" (without quotes) in name)
 
 
-[h1]COMMAND: Inventory[/h1]
+COMMAND: Inventory
 Displays inventory summary for certain item types
 Use InventoryX to not automatically add 0 items.
 
@@ -140,40 +149,40 @@ No arguments: displays all items on current ship/station.
 1. argument: filters blocks based on name
 Next arguments: specify included/excluded item types and quotas
 
-[b]Item type and quota specification:[/b]
+Item type and quota specification:
 Operator + or - adds or removes items from display
-[b]+all[/b] adds all item types to display 
-[b]-ore[/b] removes ores from all items already added
- * You need to add something for [b]-[/b] operator to work!
-[b]Use main types in specification:[/b]
++all adds all item types to display 
+-ore removes ores from all items already added
+ * You need to add something for - operator to work!
+Use main types in specification:
 ore (all ores)
 ingot (all ingots)
 component (all components)
 ammo (all ammo boxes)
 tool (all tools + hand guns)
-[b]Or sub types:[/b]
+Or sub types:
 iron (both ore and ingot), gold, nickel, etc
 steelplate, construction, thrust, reactor, etc
-[i] * All types are listed in full guide.[/i]
+ * All types are listed in full guide.
 
-[b]Or both:[/b]
+Or both:
 ingot/iron (only iron ingots), ingot/uranium (only uranium)
-[b]You can combine that like this:[/b]
+You can combine that like this:
 +ingot/iron,gold (add iron and gold ingots)
 +ingot,component (add ingots and components)
 +steelplate,construction (steelplates and construction components)
-[b]To override progress bar quotas:[/b]
+To override progress bar quotas:
 +ingot:10000 
 (adds all ingots with all of them having max progress bar value 10000)
 +component:1000 +steelplate:10000,construction:9000
 (adds all components with quota 1000, 
 overrides steelplate and construction components with different quotas)
 
-[b]Example usages:[/b]
+Example usages:
 Inventory {Ingot Storage} +ingot:30000
 Inventory Container +all -tool -ammo
 
-[h1]COMMAND: Missing[/h1]
+COMMAND: Missing
 Displays items which are low in stock (lower than set quota)
 
 Default minimum quota is 1.
@@ -183,88 +192,88 @@ No arguments: displays all missing items on ship/station.
 1. argument: filters blocks based on name
 Next arguments: specify included/excluded item types and quotas
 
-[b]Example:[/b]
+Example:
 Missing [STORAGE] +component:50 +ingot:100 +ammo:10
 
-[h1]COMMAND: Cargo[/h1]
+COMMAND: Cargo
 Displays cargo space of specified cargo containers
 
 No arguments: all containers on ship/station
 1. argument: filters containers based on name
 
-[b]Example:[/b]
+Example:
 Cargo {Red Cargo}
 
-[h1]COMMAND: Power[/h1]
+COMMAND: Power
 Displays power statistics for specified blocks
 Automatically separates reactors, solar panels and batteries
 
 No arguments: all reactors, solars and batteries
 1. argument: filters blocks based on name
 
-[b]Example:[/b]
+Example:
 Power {Main Power}
 
-[h1]COMMAND: Damage[/h1]
+COMMAND: Damage
 Displays damaged ship/station blocks
 
 No arguments: all blocks on ship/station
 1. argument: filters blocks based on name
 
-[b]Example:[/b]
+Example:
 Damage [SHIPYARD]
 
-[h1]COMMAND: BlockCount[/h1]
+COMMAND: BlockCount
 Displays number of blocks of specified type
 Separates different sub types of blocks
 
 No arguments: nothing will be displayed!
 1. argument: filters blocks based on name, still nothing displayed!
 Next arguments: filter blocks based on type
-[b]Use main block type name like:[/b]
+Use main block type name like:
 reactor, thruster, container, refinery, assembler, etc
-[i] * All block types are listed in full guide.[/i]
-[b]Types separated by space or ,[/b]
+ * All block types are listed in full guide.
+Types separated by space or ,
 
-[b]Example:[/b]
+Example:
 BlockCount * thruster,gyro,reactor,solar,battery
 
-[h1]COMMAND: Working[/h1]
+COMMAND: Working
 Displays all blocks of specified type showing their working state.
 
 Usage is same as BlockCount. 
-[b]You can filter states like this:[/b]
+You can filter states like this:
 Working * assembler:work reactor:on
 
-[b]Example:[/b]
+Example:
 Working Red refinery,assembler
 
-[h1]COMMAND: Echo[/h1]
+COMMAND: Echo
 Displays single line of text
 
 No arguments: empty line
 Next arguments: text to be displayed
 
-[b]Examples:[/b]
+Examples:
 Echo MMaster's Text Panel
 Echo
 
-[h1]COMMAND: Time[/h1]
+COMMAND: Time
 Displays single line of text followed by current time
 
 No arguments: display only current time
 Next arguments: text to be shown before the time
 
-[b]Example:[/b]
+Example:
 Time MMaster's Text Panel Time: 
  
-[h1]COMMAND: Pos[/h1]
+COMMAND: Pos
 Displays world position of the LCD panel.
 
-[h1]Tips[/h1]
+Tips
  * Really look at full guide. It has everything in it and you can navigate it really easily.
 
-[h1]Special Thanks[/h1]
+Special Thanks
 bssespaceengineers.com - awesome server
 Rhedd - for his contribution to modded items entries
 Textor and CyberVic for their great script related contributions on Keen forums.
@@ -273,26 +282,12 @@ Watch Twitter: https://twitter.com/MattsPlayCorner
 and Facebook: https://www.facebook.com/MattsPlayCorner1080p
 for more crazy stuff from me in the future :)
  */
-    // Use this tag to identify LCDs managed by this script
-    public static string LCD_TAG = "[LCD]";
-    // For german clients
-    public static string SECONDARY_TAG = "!LCD!";
-    // How many panels to update per one step
-    public static int PANELS_PER_STEP = 1;
-    // How many lines to scroll per step
-    public static int DSCROLL_LINES_PER_STEP = 5;
-
-    // Force redraw of panels? (EXPERIMENTAL, default = true)
-    // false - Massively reduces lag caused by LCD redraw, but can be buggy
-    public static bool FORCE_REDRAW = true;
-
-    // Enable debug to antenna or LCD marked with [DEBUG]
-    public static bool EnableDebug = false;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // DO NOT MODIFY ANYTHING BELOW THIS
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    public static int SCROLL_LINES_PER_STEP = 5;
+    // For german clients
+    public static string SECONDARY_TAG = "!LCD!";
     public static int step = 0;
     void Main()
     {
@@ -324,6 +319,7 @@ public static class MMItems
 // (subType, mainType, mass, volume, quota, display name, short name)
 // ADD MODDED ITEMS TO THIS LIST
 // !! MAIN TYPES MUST GO TOGETHER FOR INV CATEGORIES !!
+// VANILLA ITEMS
 // Generated from SE Data 20.3.2015
 Add("Stone", "Ore", 1f, 0.37f);
 Add("Iron", "Ore", 1f, 0.37f);
@@ -346,9 +342,6 @@ Add("Silver", "Ingot", 1f, 0.095f, 50000);
 Add("Gold", "Ingot", 1f, 0.052f, 60000);
 Add("Platinum", "Ingot", 1f, 0.047f, 40000);
 Add("Uranium", "Ingot", 1f, 0.052f, 10000);
-// MODDED Antimatter Ultimate PVP Pack
-//Add("Antimatter", "Ingot", 1f, 0.37f, 50000);
-// Vanilla
 Add("Scrap", "Ingot", 1f, 0.254f);
 Add("AutomaticRifleItem", "PhysicalGunObject", 3f, 14f, 10);
 Add("WelderItem", "PhysicalGunObject", 5f, 8f);
@@ -374,16 +367,13 @@ Add("Detector", "Component", 5f, 6f, 100);
 Add("Explosives", "Component", 2f, 2f, 100);
 Add("SolarCell", "Component", 8f, 20f, 1500);
 Add("PowerCell", "Component", 25f, 45f, 1500);
-// MODDED ITEM AzimuthSupercharger 
-// (mass and volume not known - set same as thruster)
-//Add("AzimuthSupercharger", "Component", 40f, 10f, 1600, "Supercharger", "supercharger");
-// Vanilla
 Add("NATO_5p56x45mm", "AmmoMagazine", 0.45f, 0.2f, 1000);
 Add("NATO_25x184mm", "AmmoMagazine", 35f, 16f, 2000);
 Add("Missile200mm", "AmmoMagazine", 45f, 60f, 1600);
 // MODDED ITEMS 
-// Scatter ammo (mass and volume not known - set similar to NATO magazines)
-//Add("Scatter", "AmmoMagazine", 40f, 20f, 2000);
+// AzimuthSupercharger 
+// (mass and volume not known - set same as thruster)
+//Add("AzimuthSupercharger", "Component", 10f, 9f, 1600, "Supercharger", "supercharger");
 /* Contributed by Rhedd */
 // CSD Battlecannon
 //Add("250shell", "AmmoMagazine", 128f, 64f, 100);
@@ -402,6 +392,7 @@ Add("Missile200mm", "AmmoMagazine", 45f, 60f, 1600);
 //Add("MagazineSmallBlasterPowerCellGreen", "AmmoMagazine", 15f, 6f, 1000);
 //Add("MagazineSmallBlasterPowerCellBlue", "AmmoMagazine", 15f, 6f, 1000);
 // Antimatter Ultimate PVP Pack
+//Add("Antimatter", "Ingot", 1f, 0.37f, 50000);
 //Add("AntimatterTorpedo200mm", "AmmoMagazine", 120f, 45f, 100);
 // Scatter turret ammo
 //Add("LargeScatter", "AmmoMagazine", 35f, 16f, 2000);
@@ -418,7 +409,6 @@ Add("Missile200mm", "AmmoMagazine", 45f, 60f, 1600);
 //Add("ISMTracer", "AmmoMagazine", 35f, 16f, 1000);
 // ISM Hellfire Launcher
 //Add("ISM_Hellfire", "AmmoMagazine", 45f, 60f, 500);
-
     }
 
     /* REALLY REALLY REALLY
@@ -427,10 +417,10 @@ Add("Missile200mm", "AmmoMagazine", 45f, 60f, 1600);
 
     // displayName - how the item will be displayed
     // shortName - how the item can be called in arguments (eg: +supercharger)
-    public static void Add(string subType, string mainType, double mass, double volume, int quota = 0, string displayName = "", string shortName = "")
+    public static void Add(string subType, string mainType, double mass, double volume, int quota = 0, string displayName = "", string shortName = "", bool used = true)
     {
         string fullType = subType + ' ' + mainType;
-        MMItem item = new MMItem(subType, mainType, mass, volume, quota, displayName, shortName);
+        MMItem item = new MMItem(subType, mainType, mass, volume, quota, displayName, shortName, used);
         items.Add(fullType, item);
         if (shortName != "")
             itemsByShortName.Add(shortName.ToLower(), item);
@@ -597,6 +587,9 @@ public class LCDsProgram
             if (cmd.command == "damage")
                 RunDamage(panel, cmd);
             else
+            if (cmd.command.StartsWith("amount"))
+                RunItemAmount(panel, cmd);
+            else
             if (cmd.command == "pos")
                 RunPosition(panel, cmd);
 
@@ -748,15 +741,9 @@ public class LCDsProgram
                 blocks.AddBlocksOfType(subargtype, cmd.nameLike);
 
                 if (blocks.Count() > 0) {
-                    Dictionary<string, int> typeCount = new Dictionary<string, int>();
-                    List<string> blockTypes = new List<string>();
-
                     for (int j = 0; j < blocks.Count(); j++)
                     {
                         IMyTerminalBlock block = blocks.Blocks[j];
-                        if (block == null)
-                            continue;
-
                         string onoff = GetWorkingString(block);
                         if (subargstate != "" && onoff.ToLower() != subargstate)
                             continue;
@@ -765,6 +752,82 @@ public class LCDsProgram
                         MMLCDTextManager.Add(panel, blockName);
                         MMLCDTextManager.AddRightAlign(panel, onoff, LCD_LINE_WORK_STATE_POS);
                         MMLCDTextManager.AddLine(panel, "");
+                    }
+                }
+            }
+        }
+    }
+
+    public void RunItemAmount(MMPanel panel, MMCommand cmd)
+    {
+        bool progressbars = true;
+        if (cmd.command[cmd.command.Length - 1] == 'x')
+        {
+            cmd.command = cmd.command.Substring(0, cmd.command.Length - 1);
+            progressbars = false;
+        }
+
+        if (cmd.arguments.Count == 0)
+            cmd.arguments.Add(new MMArgument(
+                "reactor,gatlingturret,missileturret,interiorturret,gatlinggun,launcherreload,launcher,oxygenerator"));
+
+        for (int i = 0; i < cmd.arguments.Count; i++)
+        {
+            MMArgument arg = cmd.arguments[i];
+
+            for (int subi = 0; subi < arg.sub.Count; subi++)
+            {
+                MMBlockCollection blocks = new MMBlockCollection();
+                if (arg.sub[subi] == "")
+                    continue;
+                string subargtype = arg.sub[subi];
+                blocks.AddBlocksOfType(subargtype, cmd.nameLike);
+
+                if (blocks.Count() > 0)
+                {
+                    for (int j = 0; j < blocks.Count(); j++)
+                    {
+                        IMyTerminalBlock block = blocks.Blocks[j];
+                        IMyInventory inv = block.GetInventory(0);
+                        if (inv == null)
+                            continue;
+
+                        double amt = 0;
+                        double max_amt = 0;
+                        double other_amt = 0;
+                        List<IMyInventoryItem> items = inv.GetItems();
+                        string item_type = (items.Count > 0 ? items[0].Content.ToString() : "");
+                        for (int idx = 0; idx < items.Count; idx++)
+                        {
+                            IMyInventoryItem item = items[idx];
+                            
+                            if (item.Content.ToString() != item_type)
+                                other_amt += (double)item.Amount;
+                            else
+                                amt += (double)item.Amount;
+                        }
+                        string amount_str = "EMPTY";
+                        string blockName = block.CustomName;
+
+                        if (amt > 0 && (double)inv.CurrentVolume > 0)
+                        {
+                            double other_vol = other_amt * (double)inv.CurrentVolume / (amt + other_amt);
+                            max_amt = Math.Floor(amt * ((double)inv.MaxVolume - other_vol) / (double)inv.CurrentVolume - other_vol);
+
+                            amount_str = MM.FormatLargeNumber(amt) + " / " + (other_amt > 0 ? "~" : "") + MM.FormatLargeNumber(max_amt);
+                        }
+
+                        blockName = MMStringFunc.GetStringTrimmed(blockName, LCD_LINE_WORK_STATE_POS - 60);
+                        MMLCDTextManager.Add(panel, blockName);
+                        MMLCDTextManager.AddRightAlign(panel, amount_str, LCD_LINE_WORK_STATE_POS);
+                        MMLCDTextManager.AddLine(panel, "");
+
+                        if (progressbars && max_amt > 0)
+                        {
+                            double perc = 100 * amt / max_amt;
+                            MMLCDTextManager.AddProgressBar(panel, perc, FULL_PROGRESS_CHARS);
+                            MMLCDTextManager.AddLine(panel, "");
+                        }
                     }
                 }
             }
@@ -835,31 +898,33 @@ public class LCDsProgram
         {
             IMyTerminalBlock block = blocks.Blocks[i];
 
-            switch (block.DefinitionDisplayNameText)
+            if (MM.IsBlockOfType(block, "airvent"))
             {
-                case "Air Vent":
-                    str = MM.GetLastDetailedValue(block);
-                    string val = str.Substring(0, str.Length - 1);
+                str = MM.GetLastDetailedValue(block);
+                string val = str.Substring(0, str.Length - 1);
 
-                    if (!Double.TryParse(val, out percent))
-                        percent = 0;
-                    
-                    MMLCDTextManager.Add(panel, block.CustomName);
-                    MMLCDTextManager.AddRightAlign(panel, str, LCD_LINE_WORK_STATE_POS);
-                    MMLCDTextManager.AddLine(panel, "");
-                    MMLCDTextManager.AddProgressBar(panel, percent, FULL_PROGRESS_CHARS);
-                    MMLCDTextManager.AddLine(panel, "");
-                    found = true;
-                    continue;
-                case "Oxygen Tank":
-                    str = MM.GetLastDetailedValue(block);
-                    str = str.Substring(0, str.Length - 1);
+                if (!Double.TryParse(val, out percent))
+                    percent = 0;
 
-                    double tank_oxy = 0;
-                    if (Double.TryParse(str, out tank_oxy))
-                        tank_sum += tank_oxy;
-                    tank_cnt++;
-                    continue;
+                MMLCDTextManager.Add(panel, block.CustomName);
+                MMLCDTextManager.AddRightAlign(panel, str, LCD_LINE_WORK_STATE_POS);
+                MMLCDTextManager.AddLine(panel, "");
+                MMLCDTextManager.AddProgressBar(panel, percent, FULL_PROGRESS_CHARS);
+                MMLCDTextManager.AddLine(panel, "");
+                found = true;
+                continue;
+            }
+
+            if (MM.IsBlockOfType(block, "oxytank")) 
+            {
+                str = MM.GetLastDetailedValue(block);
+                str = str.Substring(0, str.Length - 1);
+
+                double tank_oxy = 0;
+                if (Double.TryParse(str, out tank_oxy))
+                    tank_sum += tank_oxy;
+                tank_cnt++;
+                continue;
             }
         }
 
@@ -1727,6 +1792,8 @@ public class MMItemAmounts
         for (int i = 0; i < MMItems.items_keys.Count; i++)
         {
             MMItem item = MMItems.items[MMItems.items_keys[i]];
+            if (!item.used)
+                continue;
             string fullType = item.subType + ' ' + item.mainType;
 
             if (IsIgnored(fullType, item.subType, item.mainType))
@@ -1744,7 +1811,7 @@ public class MMItemAmounts
         {
             for (int invId = 0; invId < col.Blocks[i].GetInventoryCount(); invId++)
             {
-                IMyInventory inv = MM.GetBlockInventory(col.Blocks[i], invId);
+                IMyInventory inv = col.Blocks[i].GetInventory(invId);
 
                 List<IMyInventoryItem> items = inv.GetItems();
                 for (int j = 0; j < items.Count; j++)
@@ -1798,7 +1865,7 @@ public class MMInventory
     {
         OwnerBlock = owner;
         InventoryId = invID;
-        Inventory = MM.GetBlockInventory(OwnerBlock, InventoryId);
+        Inventory = owner.GetInventory(invID);
     }
 
     // get all items from this inventory (auto-cached)  
@@ -1873,18 +1940,6 @@ public static class MM
     public static double GetPercent(double current, double max)
     {
         return (max > 0 ? (current / max) * 100 : 100);
-    }
-
-    // Get inventory of block  
-    public static IMyInventory GetBlockInventory(IMyTerminalBlock block, int invID = 0)
-    {
-        IMyInventoryOwner invOwner = (block as IMyInventoryOwner);
-        IMyInventory inv = null;
-
-        if (invOwner != null)
-            inv = invOwner.GetInventory(invID);
-
-        return inv;
     }
 
     public static List<double> GetDetailedInfoValues(IMyTerminalBlock block)
@@ -2699,8 +2754,10 @@ public class MMItem
     public string displayName = "";
     public string shortName = "";
 
+    public bool used = true;
+
     public MMItem(string _subType, string _mainType, double _mass, double _volume, 
-        int _defaultQuota = 0, string _displayName = "", string _shortName = "")
+        int _defaultQuota = 0, string _displayName = "", string _shortName = "", bool _used = true)
     {
         subType = _subType;
         mainType = _mainType;
@@ -2709,6 +2766,7 @@ public class MMItem
         defaultQuota = _defaultQuota;
         displayName = _displayName;
         shortName = _shortName;
+        used = _used;
     }
 }
 // Dictionary helper
