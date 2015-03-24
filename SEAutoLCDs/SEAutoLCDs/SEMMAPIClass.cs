@@ -45,7 +45,7 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.3 [Oxygen, Ammo reports, LCD joining & Groups support!]
+/* v:1.31 [Oxygen, Ammo reports, LCD joining & Groups support!]
 In-game script by MMaster
 
 Customize these: (do not report problems with modified values!) */
@@ -258,17 +258,6 @@ Examples:
 Echo MMaster's Text Panel
 Echo
 
-COMMAND: Time
-Displays single line of text followed by current time
-
-No arguments: display only current time
-Next arguments: text to be shown before the time
-
-Example:
-Time MMaster's Text Panel Time: 
- 
-COMMAND: Pos
-Displays world position of the LCD panel.
 
 Tips
  * Really look at full guide. It has everything in it and you can navigate it really easily.
@@ -371,44 +360,11 @@ Add("NATO_5p56x45mm", "AmmoMagazine", 0.45f, 0.2f, 1000);
 Add("NATO_25x184mm", "AmmoMagazine", 35f, 16f, 2000);
 Add("Missile200mm", "AmmoMagazine", 45f, 60f, 1600);
 // MODDED ITEMS 
+// (subType, mainType, mass, volume, quota, display name, short name, used)
+// * if used is true, item will be shown in inventory even for 0 items
+// * if used is false, item will be used only for display name and short name
 // AzimuthSupercharger 
-// (mass and volume not known - set same as thruster)
-//Add("AzimuthSupercharger", "Component", 10f, 9f, 1600, "Supercharger", "supercharger");
-/* Contributed by Rhedd */
-// CSD Battlecannon
-//Add("250shell", "AmmoMagazine", 128f, 64f, 100);
-//Add("88shell", "AmmoMagazine", 16f, 16f, 1000);
-//Add("88hekc", "AmmoMagazine", 16f, 16f, 1000);
-// Minotaur Cannon
-//Add("MinotaurAmmo", "AmmoMagazine", 360f, 128f, 500);
-// Twin Missile Launchers
-//Add("TwinMiniMissile20mm", "AmmoMagazine", 4.5f, 6f, 1000);
-//Add("TwinMicroMissile5mm", "AmmoMagazine", 1f, 1.5f, 1000);
-// Twin Blaster Weapons
-//Add("MagazineBlasterPowerCellRed", "AmmoMagazine", 15f, 6f, 1000);
-//Add("MagazineBlasterPowerCellGreen", "AmmoMagazine", 15f, 6f, 1000);
-//Add("MagazineBlasterPowerCellBlue", "AmmoMagazine", 15f, 6f, 1000);
-//Add("MagazineSmallBlasterPowerCellRed", "AmmoMagazine", 15f, 6f, 1000);
-//Add("MagazineSmallBlasterPowerCellGreen", "AmmoMagazine", 15f, 6f, 1000);
-//Add("MagazineSmallBlasterPowerCellBlue", "AmmoMagazine", 15f, 6f, 1000);
-// Antimatter Ultimate PVP Pack
-//Add("Antimatter", "Ingot", 1f, 0.37f, 50000);
-//Add("AntimatterTorpedo200mm", "AmmoMagazine", 120f, 45f, 100);
-// Scatter turret ammo
-//Add("LargeScatter", "AmmoMagazine", 35f, 16f, 2000);
-// ISM weapons from FancyFez
-// ISM Mjollnir.FG Small ship fusion gun 
-//Add("ISM_FusionAmmo", "AmmoMagazine", 35f, 10f, 1000);
-// ISM Longbow Small Ship Long Range Rifle
-//Add("ISM_LongbowAmmo", "AmmoMagazine", 35f, 2f, 1000);
-// ISM Mayfly CDS
-//Add("ISMNeedles", "AmmoMagazine", 35f, 16f, 1000);
-// ISM BullDog.01 Small ship gatling gun
-//Add("ISM_MinigunAmmo", "AmmoMagazine", 35f, 16f, 1000);
-// ISM Pikeman AA Defense System
-//Add("ISMTracer", "AmmoMagazine", 35f, 16f, 1000);
-// ISM Hellfire Launcher
-//Add("ISM_Hellfire", "AmmoMagazine", 45f, 60f, 500);
+Add("AzimuthSupercharger", "Component", 10f, 9f, 1600, "Supercharger", "supercharger", false);
     }
 
     /* REALLY REALLY REALLY
@@ -596,9 +552,7 @@ public class LCDsProgram
             MM.Debug("Done.");
         }
 
-        //if (!MM.EnableDebug)
-            MMLCDTextManager.UpdatePanel(panel);
-        //MM.Debug("Updated panel text.");
+        MMLCDTextManager.UpdatePanel(panel);
     }
 
     public void RunPosition(MMPanel panel, MMCommand cmd)
@@ -847,12 +801,7 @@ public class LCDsProgram
     public void RunDamage(MMPanel panel, MMCommand cmd)
     {
         MMBlockCollection blocks = new MMBlockCollection();
-
-        if (cmd.nameLike == "" || cmd.nameLike == "*")
-            blocks.Blocks = MM._GridTerminalSystem.Blocks;
-        else
-            blocks.AddBlocksOfNameLike(cmd.nameLike);
-
+        blocks.AddBlocksOfNameLike(cmd.nameLike);
         bool found = false;
 
         for (int i = 0; i < blocks.Count(); i++)
@@ -888,51 +837,50 @@ public class LCDsProgram
         int tank_cnt = 0;
         string str;
         double percent = 0;
-        bool found = false;
-
         MMBlockCollection blocks = new MMBlockCollection();
+        IMyTerminalBlock block = null;
+
         blocks.AddBlocksOfType("airvent", cmd.nameLike);
-        blocks.AddBlocksOfType("oxytank", cmd.nameLike);
+        bool found = (blocks.Count() > 0);
 
         for (int i = 0; i < blocks.Count(); i++)
         {
-            IMyTerminalBlock block = blocks.Blocks[i];
+            block = blocks.Blocks[i];
 
-            if (MM.IsBlockOfType(block, "airvent"))
-            {
-                str = MM.GetLastDetailedValue(block);
-                string val = str.Substring(0, str.Length - 1);
+            str = MM.GetLastDetailedValue(block);
+            string val = str.Substring(0, str.Length - 1);
 
-                if (!Double.TryParse(val, out percent))
-                    percent = 0;
+            if (!Double.TryParse(val, out percent))
+                percent = 0;
 
-                MMLCDTextManager.Add(panel, block.CustomName);
-                MMLCDTextManager.AddRightAlign(panel, str, LCD_LINE_WORK_STATE_POS);
-                MMLCDTextManager.AddLine(panel, "");
-                MMLCDTextManager.AddProgressBar(panel, percent, FULL_PROGRESS_CHARS);
-                MMLCDTextManager.AddLine(panel, "");
-                found = true;
-                continue;
-            }
-
-            if (MM.IsBlockOfType(block, "oxytank")) 
-            {
-                str = MM.GetLastDetailedValue(block);
-                str = str.Substring(0, str.Length - 1);
-
-                double tank_oxy = 0;
-                if (Double.TryParse(str, out tank_oxy))
-                    tank_sum += tank_oxy;
-                tank_cnt++;
-                continue;
-            }
+            MMLCDTextManager.Add(panel, block.CustomName);
+            MMLCDTextManager.AddRightAlign(panel, str, LCD_LINE_WORK_STATE_POS);
+            MMLCDTextManager.AddLine(panel, "");
+            MMLCDTextManager.AddProgressBar(panel, percent, FULL_PROGRESS_CHARS);
+            MMLCDTextManager.AddLine(panel, "");
         }
+
+        blocks.Clear();
+        blocks.AddBlocksOfType("oxytank", cmd.nameLike);
+        tank_cnt = blocks.Count();
 
         if (tank_cnt == 0)
         {
             if (!found)
                 MMLCDTextManager.AddLine(panel, "No oxygen blocks found.");
             return;
+        }
+
+        for (int i = 0; i < tank_cnt; i++)
+        {
+            block = blocks.Blocks[i];
+
+            str = MM.GetLastDetailedValue(block);
+            str = str.Substring(0, str.Length - 1);
+
+            double tank_oxy = 0;
+            if (Double.TryParse(str, out tank_oxy))
+                tank_sum += tank_oxy;
         }
 
         percent = (tank_cnt > 0 ? tank_sum / tank_cnt: 0);
@@ -1113,11 +1061,7 @@ public class LCDsProgram
     {
         if (quota > 0)
         {
-
-            double perc = 100;
-            perc = Math.Min(100, 100 * num / quota);
-
-            MMLCDTextManager.AddProgressBar(panel, perc, INV_PROGRESS_CHARS);
+            MMLCDTextManager.AddProgressBar(panel, Math.Min(100, 100 * num / quota), INV_PROGRESS_CHARS);
             MMLCDTextManager.Add(panel, ' ' + msg + ' ');
             MMLCDTextManager.AddRightAlign(panel, MM.FormatLargeNumber(num), LCD_LINE_INV_NUMBERS_POS);
             MMLCDTextManager.AddLine(panel, " / " + MM.FormatLargeNumber(quota));
@@ -1134,15 +1078,12 @@ public class LCDsProgram
     {
         if (quota > 0)
         {
-            double perc = 100;
-            perc = Math.Min(100, 100 * num / quota);
-
             MMLCDTextManager.Add(panel, msg + ' ');
             MMLCDTextManager.AddRightAlign(panel, MM.FormatLargeNumber(num), LCD_LINE_INGOT_NUMBERS_POS);
             MMLCDTextManager.Add(panel, " / " + MM.FormatLargeNumber(quota));
             MMLCDTextManager.AddRightAlign(panel, "+" + MM.FormatLargeNumber(num_ores) + " ore", LCD_LINE_WIDTH);
             MMLCDTextManager.AddLine(panel, "");    // next line
-            MMLCDTextManager.AddProgressBar(panel, perc, FULL_PROGRESS_CHARS);
+            MMLCDTextManager.AddProgressBar(panel, Math.Min(100, 100 * num / quota), FULL_PROGRESS_CHARS);
             MMLCDTextManager.AddLine(panel, "");    // next line
         }
         else
@@ -1279,15 +1220,12 @@ public class LCDsProgram
                     quota = ingots[i].min;
 
                 string msg = MM.TranslateToDisplay(ingots[i].subType, ingots[i].mainType);
-                if (msg.EndsWith(" Component") || msg.EndsWith(" Ore") ||
-                    msg.EndsWith(" Ingot") || msg.EndsWith(" AmmoMagazine") ||
-                    msg.EndsWith(" Item"))
+                if (msg.EndsWith(" Ingot"))
                     msg = msg.Substring(0, msg.LastIndexOf(' '));
 
-                double num_ores = Double.NaN;
                 if (ingots[i].subType != "Scrap")
                 {
-                    num_ores = amounts.GetAmountSpec(ingots[i].subType + " Ore", ingots[i].subType, "Ore").current;
+                    double num_ores = amounts.GetAmountSpec(ingots[i].subType + " Ore", ingots[i].subType, "Ore").current;
                     ShowInventoryIngotLine(panel, msg, num, num_ores, quota);
                 }
                 else
@@ -1305,23 +1243,6 @@ public class LCDsProgram
 // MMAPI below (do not modify)  
 public class MMCommand
 {
-    // EXAMPLE:
-    // COMMAND NAMEFILTER ARGUMENTS
-    // Legend:
-    //      {MULTIWORD ARGUMENT} ARGUMENT +ARG/SUBARG:count,SUBARG2:count -ARG/SUBARG ARG/SUBARG
-    // Inventory {My Crago Container}
-    // Inventory {My Crago Container} +ore -stone
-    // Inventory {[Station Cargo]} +uranium
-    // Inventory [CARGO] +ingot/iron,platinum,gold
-    // Inventory Cargo +all -ore -ingot
-    // Inventory Cargo +component -steelplate +ammo +tool
-    // Inventory * +ore
-    // Inventory *
-    // Power
-    // Power [MAIN REACTORS]
-    // Cargospace [STORAGE]
-    // Blockstats [STATION] thruster reactor
-    // Blockstats * thruster reactor
     public string command = "";
     public string nameLike = "";
     public string commandLine = "";
