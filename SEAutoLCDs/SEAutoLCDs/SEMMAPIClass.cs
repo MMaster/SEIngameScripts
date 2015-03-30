@@ -45,7 +45,7 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.31 [Oxygen, Ammo reports, LCD joining & Groups support!]
+/* v:1.32 [Oxygen, Ammo reports, LCD joining & Groups support!]
 In-game script by MMaster
 
 Customize these: (do not report problems with modified values!) */
@@ -969,8 +969,8 @@ public class LCDsProgram
         MMLCDTextManager.AddLine(panel, MM.FormatLargeNumber(output) + "W)");
         
         MMLCDTextManager.Add(panel, "  Power Stored: ");
-        MMLCDTextManager.AddRightAlign(panel, MM.FormatLargeNumber(stored) + "W / ", LCD_LINE_STATS_POS);
-        MMLCDTextManager.AddLine(panel, MM.FormatLargeNumber(max_stored) + "W");
+        MMLCDTextManager.AddRightAlign(panel, MM.FormatLargeNumber(stored) + "Wh / ", LCD_LINE_STATS_POS);
+        MMLCDTextManager.AddLine(panel, MM.FormatLargeNumber(max_stored) + "Wh");
         MMLCDTextManager.AddProgressBar(panel, percent_stored, STATS_PROGRESS_CHARS);
         MMLCDTextManager.AddLine(panel, ' ' + percent_stored.ToString("0.0") + "%");
 
