@@ -45,9 +45,11 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.32 [Oxygen, Ammo reports, LCD joining & Groups support!]
+/* v:1.4 [Oxygen bottles, Ammo reports!]
 In-game script by MMaster
-
+ * 
+ * Last update: Added support for oxygen container items (new main item type: "oxygen")
+ * 
 Customize these: (do not report problems with modified values!) */
 
 
@@ -359,6 +361,7 @@ Add("PowerCell", "Component", 25f, 45f, 1500);
 Add("NATO_5p56x45mm", "AmmoMagazine", 0.45f, 0.2f, 1000);
 Add("NATO_25x184mm", "AmmoMagazine", 35f, 16f, 2000);
 Add("Missile200mm", "AmmoMagazine", 45f, 60f, 1600);
+Add("OxygenBottle", "OxygenContainerObject", 150f, 160f);
 // MODDED ITEMS 
 // (subType, mainType, mass, volume, quota, display name, short name, used)
 // * if used is true, item will be shown in inventory even for 0 items
@@ -446,7 +449,7 @@ public class LCDsProgram
         for (int i = 0; i < textPanels.Count(); i++)
         {
             IMyTextPanel panel = (textPanels.Blocks[i] as IMyTextPanel);
-            string text = panel.CustomName + panel.NumberInGrid.ToString();
+            string text = panel.CustomName + " " + panel.NumberInGrid + " " + panel.GetPosition().ToString("F0");
             MMPanel p = null;
 
             int joinpos = text.IndexOf("!LINK:");
@@ -887,8 +890,8 @@ public class LCDsProgram
 
         if (found)
             MMLCDTextManager.AddLine(panel, "");
-        MMLCDTextManager.Add(panel, "Oxygen Tanks average");
-        MMLCDTextManager.AddRightAlign(panel, percent.ToString() + "%", LCD_LINE_WORK_STATE_POS);
+        MMLCDTextManager.Add(panel, "Oxygen Tanks");
+        MMLCDTextManager.AddRightAlign(panel, percent.ToString("F2") + "%", LCD_LINE_WORK_STATE_POS);
         MMLCDTextManager.AddLine(panel, "");
         MMLCDTextManager.AddProgressBar(panel, percent, FULL_PROGRESS_CHARS);
         MMLCDTextManager.AddLine(panel, "");
@@ -1054,7 +1057,8 @@ public class LCDsProgram
         return (subarg == "ingot" || subarg == "ore" ||
             subarg == "component" || subarg == "ammo" ||
             subarg == "tool" || subarg == "physicalgunobject" ||
-            subarg == "ammomagazine");
+            subarg == "ammomagazine" || subarg == "oxygencontainerobject" || 
+            subarg == "oxygen");
     }
 
     private void ShowInventoryLine(MMPanel panel, string msg, double num, int quota)
@@ -1235,6 +1239,7 @@ public class LCDsProgram
         MM.Debug("Printed ingots");
         
         PrintItemsOfMain(panel, amounts, missing, simple, "Component", "Components");
+        PrintItemsOfMain(panel, amounts, missing, simple, "OxygenContainerObject", "Oxygen");
         PrintItemsOfMain(panel, amounts, missing, simple, "AmmoMagazine", "Ammo");
         PrintItemsOfMain(panel, amounts, missing, simple, "PhysicalGunObject", "Tools");
     }
@@ -1556,7 +1561,8 @@ public class MMItemAmounts
         return (subarg == "ingot" || subarg == "ore" ||
             subarg == "component" || subarg == "ammo" ||
             subarg == "tool" || subarg == "physicalgunobject" ||
-            subarg == "ammomagazine");
+            subarg == "ammomagazine" || subarg == "oxygencontainerobject" || 
+            subarg == "oxygen");
     }
 
     public void AddSpec(string subfulltype, bool ignore = false, int min = 1, int max = -1)
@@ -1582,6 +1588,9 @@ public class MMItemAmounts
             else
                 if (mainType == "ammo")
                     mainType = "ammomagazine";
+                else
+                    if (mainType == "oxygen")
+                        mainType = "oxygencontainerobject";
         }
         
         subType = parts[0].ToLower();
@@ -1593,6 +1602,9 @@ public class MMItemAmounts
             else
                 if (subType == "ammo")
                     subType = "ammomagazine";
+                else
+                    if (subType == "oxygen")
+                        subType = "oxygencontainerobject";
             spec.mainType = subType;
 
             specByMainLower.AddItem(spec.mainType, spec);
