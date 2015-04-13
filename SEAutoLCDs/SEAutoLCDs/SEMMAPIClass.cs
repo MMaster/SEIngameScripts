@@ -541,7 +541,8 @@ public class LCDsProgram
                 cmd.command == "enabledcount")
                 RunBlockCount(panel, cmd);
             else
-            if (cmd.command.StartsWith("working"))
+            if (cmd.command == "working" ||
+                cmd.command == "enabledlist")
                 RunWorkingList(panel, cmd);
             else
             if (cmd.command.StartsWith("damage"))
@@ -702,6 +703,8 @@ public class LCDsProgram
 
     public void RunWorkingList(MMPanel panel, MMCommand cmd)
     {
+        bool enabledList = (cmd.command == "enabledlist");
+
         for (int i = 0; i < cmd.arguments.Count; i++)
         {
             MMArgument arg = cmd.arguments[i];
@@ -720,7 +723,7 @@ public class LCDsProgram
                     for (int j = 0; j < blocks.Count(); j++)
                     {
                         IMyTerminalBlock block = blocks.Blocks[j];
-                        string onoff = GetWorkingString(block);
+                        string onoff = (enabledList ? (block.IsWorking ? "ON" : "OFF") : GetWorkingString(block));
                         if (subargstate != "" && onoff.ToLower() != subargstate)
                             continue;
                         string blockName = block.CustomName;
@@ -931,7 +934,7 @@ public class LCDsProgram
     public void RunCargoStatus(MMPanel panel, MMCommand cmd)
     {
         MMBlockCollection blocks = new MMBlockCollection();
-        bool alltypes = (cmd.command == "cargoall");
+        bool alltypes = (cmd.command.StartsWith("cargoall"));
         bool simple = (cmd.command[cmd.command.Length - 1] == 'x');
 
         if (alltypes)
