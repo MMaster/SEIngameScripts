@@ -549,7 +549,8 @@ public class LCDsProgram
             if (cmd.command.StartsWith("amount"))
                 RunItemAmount(panel, cmd);
             else
-            if (cmd.command == "pos")
+            if (cmd.command == "pos" ||
+                cmd.command == "posxyz")
                 RunPosition(panel, cmd);
 
             MM.Debug("Done.");
@@ -560,8 +561,25 @@ public class LCDsProgram
 
     public void RunPosition(MMPanel panel, MMCommand cmd)
     {
+        bool posxyz = (cmd.command == "posxyz");
+        IMyTerminalBlock block = panel.first;
+
         MMLCDTextManager.Add(panel, "Location: ");
-        MMLCDTextManager.AddRightAlign(panel, panel.first.GetPosition().ToString("F0"), LCD_LINE_WORK_STATE_POS);
+        if (!posxyz)
+        {
+            MMLCDTextManager.AddRightAlign(panel, block.GetPosition().ToString("F0"), LCD_LINE_WORK_STATE_POS);
+            MMLCDTextManager.AddLine(panel, "");
+            return;
+        }
+
+        MMLCDTextManager.Add(panel, "X: ");
+        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().X.ToString("F0"), LCD_LINE_WIDTH);
+        MMLCDTextManager.AddLine(panel, "");
+        MMLCDTextManager.Add(panel, "Y: ");
+        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().Y.ToString("F0"), LCD_LINE_WIDTH);
+        MMLCDTextManager.AddLine(panel, "");
+        MMLCDTextManager.Add(panel, "Z: ");
+        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().Z.ToString("F0"), LCD_LINE_WIDTH);
         MMLCDTextManager.AddLine(panel, "");
     }
 
