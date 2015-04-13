@@ -690,10 +690,6 @@ public class LCDsProgram
             else
                 return "UNLOCK";
 
-        IMyProjector proj = block as IMyProjector;
-        if (proj != null)
-            return MM.GetLastDetailedValue(block);
-
         IMyLaserAntenna lasant = block as IMyLaserAntenna;
         if (lasant != null)
             return MM.GetLaserAntennaStatus(lasant);
