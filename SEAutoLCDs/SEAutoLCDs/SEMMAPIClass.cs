@@ -45,7 +45,7 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.4 [Oxygen bottles, Ammo reports!]
+/* v:1.41 [Oxygen bottles, Ammo reports!]
 In-game script by MMaster
  * 
  * Last update: Added support for oxygen container items (new main item type: "oxygen")
@@ -2057,6 +2057,8 @@ public static class MM
         else
         if (exact == "AirVent") _GridTerminalSystem.GetBlocksOfType<IMyAirVent>(blocks);
         else
+        if (exact == "ConveyorSorter") _GridTerminalSystem.GetBlocksOfType<IMyConveyorSorter>(blocks);
+        else
         if (exact == "OxygenTank") _GridTerminalSystem.GetBlocksOfType<IMyOxygenTank>(blocks);
         else
         if (exact == "OxygenGenerator") _GridTerminalSystem.GetBlocksOfType<IMyOxygenGenerator>(blocks);
@@ -2174,6 +2176,8 @@ public static class MM
             return "Beacon";
         if (typeInStr.Contains("vent"))
             return "AirVent";
+        if (typeInStr.Contains("sorter"))
+            return "ConveyorSorter";
         if (typeInStr.Contains("tank") && typeInStr.Contains("oxy"))
             return "OxygenTank";
         if (typeInStr.Contains("gene") && typeInStr.Contains("oxy"))
@@ -2717,8 +2721,10 @@ public class MMDict<TKey, TValue>
     public void AddItem(TKey key, TValue item)
     {
         if (!dict.ContainsKey(key))
+        {
             keys.Add(key);
-        dict.Add(key, item);
+            dict.Add(key, item);
+        }
     }
 
     public void RemoveKey(TKey key)
