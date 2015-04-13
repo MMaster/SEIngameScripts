@@ -545,7 +545,8 @@ public class LCDsProgram
             if (cmd.command == "working")
                 RunWorkingList(panel, cmd);
             else
-            if (cmd.command == "damage")
+            if (cmd.command == "damage" ||
+                cmd.command == "damagex")
                 RunDamage(panel, cmd);
             else
             if (cmd.command.StartsWith("amount"))
@@ -830,6 +831,8 @@ public class LCDsProgram
 
     public void RunDamage(MMPanel panel, MMCommand cmd)
     {
+        bool simple = (cmd.command == "damagex");
+
         MMBlockCollection blocks = new MMBlockCollection();
         blocks.AddBlocksOfNameLike(cmd.nameLike);
         bool found = false;
@@ -848,9 +851,12 @@ public class LCDsProgram
             
             MMLCDTextManager.Add(panel, MMStringFunc.GetStringTrimmed(slim.FatBlock.DisplayNameText, 
                 LCD_LINE_DMG_NUMBERS_POS - 70) + " ");
-            MMLCDTextManager.AddRightAlign(panel, MM.FormatLargeNumber(hull) + " / ", 
-                LCD_LINE_DMG_NUMBERS_POS);
-            MMLCDTextManager.Add(panel, MM.FormatLargeNumber(slim.MaxIntegrity));
+            if (!simple)
+            {
+                MMLCDTextManager.AddRightAlign(panel, MM.FormatLargeNumber(hull) + " / ",
+                    LCD_LINE_DMG_NUMBERS_POS);
+                MMLCDTextManager.Add(panel, MM.FormatLargeNumber(slim.MaxIntegrity));
+            }
             MMLCDTextManager.AddRightAlign(panel, ' ' + perc.ToString("0.0") + "%", LCD_LINE_WIDTH);
             MMLCDTextManager.AddLine(panel, "");
             MMLCDTextManager.AddProgressBar(panel, perc, FULL_PROGRESS_CHARS);
