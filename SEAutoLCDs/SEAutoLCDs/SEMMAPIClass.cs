@@ -518,8 +518,7 @@ public class LCDsProgram
                 cmd.command.StartsWith("invlist"))
                 RunInvListing(panel, cmd);
             else
-            if (cmd.command == "cargo" ||
-                cmd.command == "cargoall")
+            if (cmd.command.StartsWith("cargo"))
                 RunCargoStatus(panel, cmd);
             else
             if (cmd.command == "oxygen")
@@ -542,11 +541,10 @@ public class LCDsProgram
                 cmd.command == "enabledcount")
                 RunBlockCount(panel, cmd);
             else
-            if (cmd.command == "working")
+            if (cmd.command.StartsWith("working"))
                 RunWorkingList(panel, cmd);
             else
-            if (cmd.command == "damage" ||
-                cmd.command == "damagex")
+            if (cmd.command.StartsWith("damage"))
                 RunDamage(panel, cmd);
             else
             if (cmd.command.StartsWith("amount"))
@@ -934,6 +932,7 @@ public class LCDsProgram
     {
         MMBlockCollection blocks = new MMBlockCollection();
         bool alltypes = (cmd.command == "cargoall");
+        bool simple = (cmd.command[cmd.command.Length - 1] == 'x');
 
         if (alltypes)
             blocks.AddBlocksOfNameLike(cmd.nameLike);
@@ -947,10 +946,19 @@ public class LCDsProgram
             out usedCargo, out totalCargo);
 
         MMLCDTextManager.Add(panel, "Cargo Space: ");
-        MMLCDTextManager.AddRightAlign(panel, MM.FormatLargeNumber(usedCargo) + "L / ", LCD_LINE_STATS_POS);
-        MMLCDTextManager.AddLine(panel, MM.FormatLargeNumber(totalCargo) + "L");
-        MMLCDTextManager.AddProgressBar(panel, percentCargo, STATS_PROGRESS_CHARS);
-        MMLCDTextManager.AddLine(panel, ' ' + percentCargo.ToString("0.0") + "%");
+        if (!simple)
+        {
+            MMLCDTextManager.AddRightAlign(panel, MM.FormatLargeNumber(usedCargo) + "L / ", LCD_LINE_STATS_POS);
+            MMLCDTextManager.AddLine(panel, MM.FormatLargeNumber(totalCargo) + "L");
+            MMLCDTextManager.AddProgressBar(panel, percentCargo, STATS_PROGRESS_CHARS);
+            MMLCDTextManager.AddLine(panel, ' ' + percentCargo.ToString("0.0") + "%");
+        }
+        else
+        {
+            MMLCDTextManager.AddRightAlign(panel, percentCargo.ToString("0.0") + "%", LCD_LINE_WIDTH);
+            MMLCDTextManager.AddLine(panel, "");
+        }
+        
     }
 
     public void ShowPowerOutput(MMPanel panel, MMBlockCollection generators, string title)
