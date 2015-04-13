@@ -538,8 +538,7 @@ public class LCDsProgram
             if (cmd.command.EndsWith("count"))
                 RunBlockCount(panel, cmd);
             else
-            if (cmd.command == "working" ||
-                cmd.command == "enabledlist")
+            if (cmd.command.StartsWith("working"))
                 RunWorkingList(panel, cmd);
             else
             if (cmd.command.StartsWith("damage"))
@@ -699,7 +698,7 @@ public class LCDsProgram
 
     public void RunWorkingList(MMPanel panel, MMCommand cmd)
     {
-        bool enabledList = (cmd.command == "enabledlist");
+        bool enabledList = (cmd.command == "workingx");
 
         for (int i = 0; i < cmd.arguments.Count; i++)
         {
@@ -722,6 +721,9 @@ public class LCDsProgram
                         string onoff = (enabledList ? (block.IsWorking ? "ON" : "OFF") : GetWorkingString(block));
                         if (subargstate != "" && onoff.ToLower() != subargstate)
                             continue;
+                        if (enabledList)
+                            onoff = GetWorkingString(block);
+
                         string blockName = block.CustomName;
                         blockName = MMStringFunc.GetStringTrimmed(blockName, LCD_LINE_WORK_STATE_POS - 60);
                         MMLCDTextManager.Add(panel, blockName);
