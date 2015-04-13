@@ -524,8 +524,7 @@ public class LCDsProgram
             if (cmd.command == "oxygen")
                 RunOxygenStatus(panel, cmd);
             else
-            if (cmd.command == "power" ||
-                cmd.command == "powersummary")
+            if (cmd.command.StartsWith("power"))
                 RunPowerStatus(panel, cmd);
             else
             if (cmd.command == "time" ||
@@ -536,9 +535,7 @@ public class LCDsProgram
                 cmd.command == "center")
                 RunEcho(panel, cmd);
             else
-            if (cmd.command == "blockcount" ||
-                cmd.command == "prodcount" ||
-                cmd.command == "enabledcount")
+            if (cmd.command.EndsWith("count"))
                 RunBlockCount(panel, cmd);
             else
             if (cmd.command == "working" ||
@@ -551,8 +548,7 @@ public class LCDsProgram
             if (cmd.command.StartsWith("amount"))
                 RunItemAmount(panel, cmd);
             else
-            if (cmd.command == "pos" ||
-                cmd.command == "posxyz")
+            if (cmd.command.StartsWith("pos"))
                 RunPosition(panel, cmd);
 
             MM.Debug("Done.");
@@ -666,6 +662,14 @@ public class LCDsProgram
             else
                 return "IDLE";
 
+        IMyAirVent vent = block as IMyAirVent;
+        if (vent != null)
+            return MM.GetLastDetailedValue(block);
+
+        IMyOxygenTank tank = block as IMyOxygenTank;
+        if (tank != null)
+            return MM.GetLastDetailedValue(block);
+
         IMyLandingGear gear = block as IMyLandingGear;
         if (gear != null)
             return MM.GetLandingGearStatus(gear);
@@ -686,17 +690,13 @@ public class LCDsProgram
             else
                 return "UNLOCK";
 
+        IMyProjector proj = block as IMyProjector;
+        if (proj != null)
+            return MM.GetLastDetailedValue(block);
+
         IMyLaserAntenna lasant = block as IMyLaserAntenna;
         if (lasant != null)
             return MM.GetLaserAntennaStatus(lasant);
-
-        IMyAirVent vent = block as IMyAirVent;
-        if (vent != null)
-            return MM.GetLastDetailedValue(block);
-
-        IMyOxygenTank tank = block as IMyOxygenTank;
-        if (tank != null)
-            return MM.GetLastDetailedValue(block);
 
         return "ON";
     }
