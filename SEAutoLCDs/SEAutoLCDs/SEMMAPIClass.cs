@@ -529,7 +529,8 @@ public class LCDsProgram
                 cmd.command == "powersummary")
                 RunPowerStatus(panel, cmd);
             else
-            if (cmd.command == "time")
+            if (cmd.command == "time" ||
+                cmd.command == "date")
                 RunCurrentTime(panel, cmd);
             else
             if (cmd.command == "echo")
@@ -1064,10 +1065,16 @@ public class LCDsProgram
 
     public void RunCurrentTime(MMPanel panel, MMCommand cmd)
     {
+        bool date = (cmd.command == "date");
+
         int first_space = cmd.commandLine.IndexOf(' ');
         if (first_space >= 0)
             MMLCDTextManager.Add(panel, cmd.commandLine.Substring(first_space + 1));
-        MMLCDTextManager.AddLine(panel, DateTime.Now.ToShortTimeString());
+
+        if (!date)
+            MMLCDTextManager.AddLine(panel, DateTime.Now.ToShortTimeString());
+        else
+            MMLCDTextManager.AddLine(panel, DateTime.Now.ToShortDateString());
     }
 
     private bool IsMainType(string subarg)
