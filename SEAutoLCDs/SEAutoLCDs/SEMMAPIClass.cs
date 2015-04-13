@@ -533,7 +533,8 @@ public class LCDsProgram
                 cmd.command == "date")
                 RunCurrentTime(panel, cmd);
             else
-            if (cmd.command == "echo")
+            if (cmd.command == "echo" ||
+                cmd.command == "center")
                 RunEcho(panel, cmd);
             else
             if (cmd.command == "blockcount" ||
@@ -812,12 +813,19 @@ public class LCDsProgram
 
     public void RunEcho(MMPanel panel, MMCommand cmd)
     {
+        bool center = (cmd.command == "center");
         int idx = cmd.commandLine.IndexOf(' ');
         string msg = "";
         if (idx >= 0)
             msg = cmd.commandLine.Substring(idx + 1);
 
-        MMLCDTextManager.AddLine(panel, msg);
+        if (!center)
+            MMLCDTextManager.AddLine(panel, msg);
+        else
+        {
+            MMLCDTextManager.AddCenter(panel, msg, LCD_LINE_WIDTH / 2);
+            MMLCDTextManager.AddLine(panel, "");
+        }
     }
 
     public void RunDamage(MMPanel panel, MMCommand cmd)
