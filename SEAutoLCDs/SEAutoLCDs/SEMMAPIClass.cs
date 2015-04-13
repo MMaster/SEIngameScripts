@@ -45,10 +45,12 @@ namespace SEAutoLCDs
         public string Storage;
 
 // COPY FROM HERE
-/* v:1.41 [Oxygen bottles, Ammo reports!]
+/* v:1.5 [Oxygen bottles, Ammo reports & more!]
 In-game script by MMaster
  * 
- * Last update: Added support for oxygen container items (new main item type: "oxygen")
+ * Last update: 
+ * Conveyor Sorter support, PosXYZ command, Date command, Center command, DamageX, CargoX & CargoAllX
+ * (look at full guide for more info)
  * 
 Customize these: (do not report problems with modified values!) */
 
@@ -142,6 +144,8 @@ e.g.: Inventory {My Cargo Container}
 (this will show inventory of blocks which have
 "My Cargo Container" (without quotes) in name)
 
+Enter {G:Group name} to select all blocks from group named "Group name"
+e.g.: Inventory {G:Containers}
 
 COMMAND: Inventory
 Displays inventory summary for certain item types
@@ -184,19 +188,6 @@ Example usages:
 Inventory {Ingot Storage} +ingot:30000
 Inventory Container +all -tool -ammo
 
-COMMAND: Missing
-Displays items which are low in stock (lower than set quota)
-
-Default minimum quota is 1.
-Works the same way as Inventory command.     
-
-No arguments: displays all missing items on ship/station.
-1. argument: filters blocks based on name
-Next arguments: specify included/excluded item types and quotas
-
-Example:
-Missing [STORAGE] +component:50 +ingot:100 +ammo:10
-
 COMMAND: Cargo
 Displays cargo space of specified cargo containers
 
@@ -224,21 +215,6 @@ No arguments: all blocks on ship/station
 
 Example:
 Damage [SHIPYARD]
-
-COMMAND: BlockCount
-Displays number of blocks of specified type
-Separates different sub types of blocks
-
-No arguments: nothing will be displayed!
-1. argument: filters blocks based on name, still nothing displayed!
-Next arguments: filter blocks based on type
-Use main block type name like:
-reactor, thruster, container, refinery, assembler, etc
- * All block types are listed in full guide.
-Types separated by space or ,
-
-Example:
-BlockCount * thruster,gyro,reactor,solar,battery
 
 COMMAND: Working
 Displays all blocks of specified type showing their working state.
@@ -569,14 +545,15 @@ public class LCDsProgram
             return;
         }
 
-        MMLCDTextManager.Add(panel, "X: ");
-        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().X.ToString("F0"), LCD_LINE_WIDTH);
         MMLCDTextManager.AddLine(panel, "");
-        MMLCDTextManager.Add(panel, "Y: ");
-        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().Y.ToString("F0"), LCD_LINE_WIDTH);
+        MMLCDTextManager.Add(panel, " X: ");
+        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().GetDim(0).ToString("F0"), LCD_LINE_WORK_STATE_POS);
         MMLCDTextManager.AddLine(panel, "");
-        MMLCDTextManager.Add(panel, "Z: ");
-        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().Z.ToString("F0"), LCD_LINE_WIDTH);
+        MMLCDTextManager.Add(panel, " Y: ");
+        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().GetDim(1).ToString("F0"), LCD_LINE_WORK_STATE_POS);
+        MMLCDTextManager.AddLine(panel, "");
+        MMLCDTextManager.Add(panel, " Z: ");
+        MMLCDTextManager.AddRightAlign(panel, block.GetPosition().GetDim(2).ToString("F0"), LCD_LINE_WORK_STATE_POS);
         MMLCDTextManager.AddLine(panel, "");
     }
 
